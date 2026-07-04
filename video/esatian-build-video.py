@@ -25,7 +25,7 @@ W, H = 1920, 1080
 FPS = 30
 
 FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-FONT_OBL = "/usr/share/fonts/truetype/dejavu/DejaVuSans-BoldOblique.ttf"
+FONT_OBL = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
 COLORS = ["#2EC4B6", "#FF6B6B", "#9B5DE5", "#FFB703", "#F15BB5",
           "#00BBF9", "#06D6A0", "#FB8500", "#4361EE", "#EF476F"]
@@ -180,6 +180,8 @@ def music_bed(total_dur):
         # comp hits on beat 1 and the and-of-2
         for off, v in ((0.0, 0.35), (1.35, 0.22)):
             ss = int((t0 + off) * SR)
+            if ss >= n:
+                continue
             for nm in chord:
                 sg = ep_note(freq(*nm), bar - off, v / len(chord))
                 end = min(n, ss + len(sg))
@@ -256,7 +258,7 @@ def render_card(idx, kind, card_text, caption):
     if caption:
         cf = ImageFont.truetype(FONT_BOLD, 40)
         clines = wrap(d, caption.lower(), cf, 1600)
-        cy = H - 90 - (len(clines) - 1) * 52
+        cy = 1005 - len(clines) * 52  # keep clear of zoom cropping
         for ln in clines:
             x = (W - d.textlength(ln, font=cf)) // 2
             d.text((x, cy), ln, font=cf, fill=(255, 255, 255),
@@ -309,13 +311,15 @@ def main():
             tts(text, raw, 0.87)
             v = read_wav(raw)
             out_a = np.concatenate([v, np.zeros(int(0.18 * SR))])
+            if i == 0 and len(out_a) < int(2.8 * SR):  # hold the title card
+                out_a = np.concatenate([out_a, np.zeros(int(2.8 * SR) - len(out_a))])
             write_wav(wav, out_a)
         d = len(read_wav(wav)) / SR
         durations.append(d)
         card_p = render_card(i, kind, card, text if kind == "n" else "")
         frames = max(int(d * FPS) + 1, 8)
         mp4 = os.path.join(OUT, f"seg{i:03d}.mp4")
-        zdir = "1+0.00045*on" if i % 2 == 0 else f"1.14-0.00045*on"
+        zdir = "min(1.08,1+0.0003*on)" if i % 2 == 0 else "max(1.0,1.08-0.0003*on)"
         run(["ffmpeg", "-y", "-loop", "1", "-framerate", str(FPS), "-i", card_p,
              "-i", wav,
              "-filter_complex",
