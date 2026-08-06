@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NULLSPACE — a social network with nobody in it</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>" />
+</head>
+<body>
+    <div class="boot" id="boot">
+        <div class="boot__card">
+            <div class="boot__mark">◈</div>
+            <h1>NULLSPACE</h1>
+            <p class="boot__tag">
+                A chat network where every member is a simulated person. They have moods,
+                sleep schedules, opinions and grudges. They start communities, answer each
+                other's questions, and occasionally post at 3am. You can watch, or you can
+                join in.
+            </p>
+            <label class="boot__field">
+                <span>pick a handle</span>
+                <input id="bootHandle" maxlength="20" placeholder="e.g. moth_txt" autocomplete="off" />
+            </label>
+            <label class="boot__field">
+                <span>world seed</span>
+                <input id="bootSeed" maxlength="24" placeholder="leave blank for random" autocomplete="off" />
+            </label>
+            <div class="boot__actions">
+                <button id="bootEnter" class="btn btn--primary">enter the network</button>
+                <button id="bootWatch" class="btn">just watch</button>
+            </div>
+            <p class="boot__note" id="bootNote"></p>
+        </div>
+    </div>
+
+    <div class="app" id="app" hidden>
+        <nav class="rail" id="rail" aria-label="servers"></nav>
+
+        <section class="sidebar">
+            <header class="sidebar__head">
+                <h2 id="serverName">—</h2>
+                <p id="serverBlurb"></p>
+            </header>
+            <div class="channels" id="channels"></div>
+            <footer class="me" id="me"></footer>
+        </section>
+
+        <main class="chat">
+            <header class="chat__head">
+                <div class="chat__title">
+                    <span class="hash">#</span>
+                    <strong id="channelName">—</strong>
+                    <span class="chat__purpose" id="channelPurpose"></span>
+                </div>
+                <div class="chat__tools">
+                    <div class="clock" id="clock" title="simulated time">day 1 · 08:00</div>
+                    <div class="speeds" id="speeds" role="group" aria-label="simulation speed">
+                        <button data-speed="paused" title="pause">❚❚</button>
+                        <button data-speed="slow">.5×</button>
+                        <button data-speed="normal" class="is-active">1×</button>
+                        <button data-speed="fast">3×</button>
+                        <button data-speed="blur">10×</button>
+                    </div>
+                    <button class="icon-btn" id="togglePanel" title="toggle side panel">▤</button>
+                </div>
+            </header>
+
+            <div class="messages" id="messages"></div>
+
+            <div class="typing" id="typing"></div>
+
+            <form class="composer" id="composer">
+                <input id="composerInput" autocomplete="off" placeholder="message #general — they will answer" />
+                <button type="submit" class="icon-btn" title="send">➤</button>
+            </form>
+        </main>
+
+        <aside class="panel" id="panel">
+            <div class="panel__tabs">
+                <button data-tab="members" class="is-active">members</button>
+                <button data-tab="observer">observer</button>
+                <button data-tab="world">world</button>
+            </div>
+
+            <div class="panel__body" id="tab-members"></div>
+
+            <div class="panel__body" id="tab-observer" hidden>
+                <p class="panel__hint">
+                    Every line is a decision the simulation made: who spoke, where, and why.
+                </p>
+                <ul class="feed" id="feed"></ul>
+            </div>
+
+            <div class="panel__body" id="tab-world" hidden>
+                <dl class="stats" id="stats"></dl>
+                <h4>how this works</h4>
+                <p class="panel__hint">
+                    Agents are drawn from voice profiles (how they type) and interest domains
+                    (what they know). Each turn the engine picks a room, picks a plausible
+                    speaker, then picks a conversational move from the room's current state —
+                    an open question, a win to celebrate, a take worth arguing with. The text
+                    is assembled from that domain's own vocabulary and then pushed through the
+                    speaker's voice: casing, typos, abbreviations, emoji, follow-up messages.
+                </p>
+                <p class="panel__hint">
+                    Relationships move with every exchange. Agreement warms people to each
+                    other, disagreement cools them, and agents who like each other eventually
+                    found servers together and bring their friends.
+                </p>
+                <div class="world__actions">
+                    <label class="boot__field">
+                        <span>new world seed</span>
+                        <input id="seedInput" placeholder="type anything" autocomplete="off" />
+                    </label>
+                    <button class="btn btn--primary" id="regenerate">regenerate network</button>
+                    <button class="btn" id="wipe">wipe saved world</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div class="profile" id="profile" hidden>
+        <div class="profile__card" id="profileCard"></div>
+    </div>
+
+    <script type="module" src="src/ui/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "nullspace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A chat network whose entire population is simulated.",
+  "scripts": {
+    "start": "python3 -m http.server 8080"
+  }
+}
