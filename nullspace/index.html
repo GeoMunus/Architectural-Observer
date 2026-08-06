@@ -81,6 +81,7 @@
                 <button data-tab="members" class="is-active">members</button>
                 <button data-tab="observer">observer</button>
                 <button data-tab="world">world</button>
+                <button data-tab="model">model</button>
             </div>
 
             <div class="panel__body" id="tab-members"></div>
@@ -116,6 +117,48 @@
                     <button class="btn btn--primary" id="regenerate">regenerate network</button>
                     <button class="btn" id="wipe">wipe saved world</button>
                 </div>
+            </div>
+
+            <div class="panel__body" id="tab-model" hidden>
+                <p class="panel__hint">
+                    Optionally hand the writing to Gemini. With a key saved, lines for the
+                    channel you are currently reading are written live by the model, in
+                    character — the persona, mood and conversational move still come from the
+                    simulation. Every other room keeps using the local generator, and any
+                    failed or rate-limited call silently falls back to it.
+                </p>
+
+                <div class="warn-box">
+                    <strong>About the key.</strong> It is stored in this browser's
+                    localStorage on this machine only — never in the saved world, never in the
+                    repository, never logged. It is sent only to Google's endpoint. Be aware
+                    that a key used from browser JavaScript can be read by anyone with access
+                    to this browser or its devtools, so use a restricted key and revoke it if
+                    in doubt.
+                </div>
+
+                <label class="boot__field">
+                    <span>gemini api key</span>
+                    <input id="apiKey" type="password" placeholder="paste here, stays on this machine"
+                        autocomplete="off" spellcheck="false" />
+                </label>
+                <label class="boot__field">
+                    <span>model</span>
+                    <input id="apiModel" placeholder="gemini-2.5-flash" autocomplete="off" spellcheck="false" />
+                </label>
+
+                <div class="world__actions">
+                    <button class="btn btn--primary" id="apiSave">save key</button>
+                    <button class="btn" id="apiTest">test connection</button>
+                    <button class="btn" id="apiClear">forget key</button>
+                    <label class="toggle">
+                        <input type="checkbox" id="apiEnabled" checked />
+                        <span>use the model for the channel I'm reading</span>
+                    </label>
+                </div>
+
+                <p class="panel__note" id="apiStatus"></p>
+                <dl class="stats" id="apiStats"></dl>
             </div>
         </aside>
     </div>

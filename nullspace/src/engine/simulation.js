@@ -35,6 +35,9 @@ export class Simulation {
         this.eventAccumulator = 0;
         this.pending = [];   // typing / delayed actions
         this.focusChannelId = null;
+        // Optional live-model backend (see engine/brain.js). Null means the
+        // network runs entirely on the local generator.
+        this.brain = null;
         this.listeners = { message: [], typing: [], event: [], tick: [] };
     }
 
@@ -100,6 +103,13 @@ export class Simulation {
     }
 
     flushPending() {
+        // Safety net: nothing should sit on a held model call this long, but a
+        // stuck request must not strand a message in the typing state forever.
+        for (const item of this.pending) {
+            if (item.readyAt === Infinity && this.clock - item.queuedAt > 20000) {
+                item.readyAt = this.clock;
+            }
+        }
         const ready = this.pending.filter((p) => p.readyAt <= this.clock);
         if (ready.length === 0) return;
         this.pending = this.pending.filter((p) => p.readyAt > this.clock);
@@ -170,17 +180,48 @@ export class Simulation {
 
     beginTyping(plan) {
         const { channel, agent, composed } = plan;
+        // Model calls are spent only on the room being read, and only when the
+        // rate limiter agrees. Everywhere else the local generator writes.
+        const useModel = Boolean(this.brain)
+            && channel.id === this.focusChannelId
+            && this.brain.canSpend();
+
         const delay = agent.typingMillisFor(composed.text) / Math.max(0.35, this.minutesPerSecond * 0.6);
         const item = {
             type: "message",
-            readyAt: this.clock + delay,
+            // Held until the model answers; the locally generated text is
+            // already in `composed` and ships if the call fails.
+            readyAt: useModel ? Infinity : this.clock + delay,
+            queuedAt: this.clock,
             channelId: channel.id,
             agentId: agent.id,
             plan,
-            visible: composed.text.length > 18 // very short messages appear without a visible "typing"
+            // Very short messages appear without a visible "typing", but a
+            // message we are waiting on should always show one.
+            visible: useModel || composed.text.length > 18
         };
         this.pending.push(item);
         if (item.visible) this.emit("typing", { channelId: channel.id });
+        if (useModel) this.requestModelText(item);
+    }
+
+    async requestModelText(item) {
+        const { channel, agent, composed } = item.plan;
+        try {
+            composed.text = await this.brain.write(this.world, agent, channel, composed);
+            // The model writes the whole utterance, so the local follow-up
+            // fragments would read as duplication.
+            composed.followUps = [];
+            composed.source = "gemini";
+        } catch {
+            composed.source = "local";  // keep the locally written fallback
+        }
+        // A channel switch or world regeneration may have dropped this already.
+        if (!this.pending.includes(item)) return;
+        item.readyAt = Math.max(
+            item.floorAt || 0,
+            this.clock + Math.min(2600, agent.typingMillisFor(composed.text))
+        );
     }
 
     deliver(item, options = {}) {
@@ -203,6 +244,7 @@ export class Simulation {
         this.world.note("speech", `${agent.handle} → #${channel.name}`, {
             rationale: composed.rationale,
             move: composed.move,
+            source: composed.source || "local",
             agentId: agent.id,
             channelId: channel.id
         });
@@ -374,14 +416,24 @@ export class Simulation {
             composed.targetId = message.id;
             composed.rationale = `responding to you in #${channel.name}`;
             const delay = 1200 + index * this.rng.int(800, 2600) + agent.typingMillisFor(composed.text);
-            this.pending.push({
+            const item = {
                 type: "message",
                 readyAt: this.clock + delay,
+                queuedAt: this.clock,
+                // Keeps replies staggered even when the model decides how long
+                // each one takes to write.
+                floorAt: this.clock + 900 + index * 1400,
                 channelId: channel.id,
                 agentId: agent.id,
                 visible: true,
                 plan: { channel, agent, composed }
-            });
+            };
+            this.pending.push(item);
+            // Answering a human is the most worthwhile place to spend a call.
+            if (this.brain && channel.id === this.focusChannelId && this.brain.canSpend()) {
+                item.readyAt = Infinity;
+                this.requestModelText(item);
+            }
             agent.nudgeAffinity(message.authorId, 0.03);
         });
         this.emit("typing", { channelId: channel.id });

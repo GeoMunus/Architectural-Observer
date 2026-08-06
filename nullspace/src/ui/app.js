@@ -5,6 +5,7 @@ import { Rng } from "../util/rng.js";
 import { PRESENCE, moodLabel, presenceRank } from "../model/agent.js";
 import { DOMAIN_BY_ID } from "../data/topics.js";
 import { VOICE_PROFILES } from "../data/voice.js";
+import { GeminiBrain, settings as modelSettings, DEFAULT_MODEL } from "../engine/brain.js";
 
 const VOICE_LABEL = Object.fromEntries(VOICE_PROFILES.map((v) => [v.id, v.label]));
 
@@ -40,8 +41,19 @@ const dom = {
     profileCard: el("profileCard"),
     seedInput: el("seedInput"),
     regenerate: el("regenerate"),
-    wipe: el("wipe")
+    wipe: el("wipe"),
+    apiKey: el("apiKey"),
+    apiModel: el("apiModel"),
+    apiSave: el("apiSave"),
+    apiTest: el("apiTest"),
+    apiClear: el("apiClear"),
+    apiEnabled: el("apiEnabled"),
+    apiStatus: el("apiStatus"),
+    apiStats: el("apiStats")
 };
+
+// Shared across worlds — regenerating the network should not lose the key.
+const brain = new GeminiBrain();
 
 const state = {
     world: null,
@@ -51,7 +63,7 @@ const state = {
     tab: "members",
     renderedIds: new Set(),
     lastRendered: null,
-    dirty: { sidebar: true, members: true, feed: true, stats: true },
+    dirty: { sidebar: true, members: true, feed: true, stats: true, model: true },
     lastSave: 0,
     lastFrame: 0
 };
@@ -348,7 +360,8 @@ function renderFeed() {
     dom.feed.innerHTML = entries.map((entry) => {
         const stamp = world.stampFor(entry.minute);
         const why = entry.rationale ? `<span>${escapeHtml(entry.rationale)}</span>` : "";
-        return `<li data-kind="${entry.kind}"><b>${escapeHtml(entry.text)}</b>${why}
+        const src = entry.source === "gemini" ? ' <span class="src">· gemini</span>' : "";
+        return `<li data-kind="${entry.kind}"><b>${escapeHtml(entry.text)}${src}</b>${why}
             <span>day ${stamp.day} · ${stamp.text}${entry.move ? ` · move: ${escapeHtml(entry.move)}` : ""}</span></li>`;
     }).join("");
 }
@@ -376,6 +389,97 @@ function renderStats() {
 }
 
 let clockKey = "";
+
+function setApiStatus(message, statusState) {
+    dom.apiStatus.textContent = message;
+    if (statusState) dom.apiStatus.dataset.state = statusState;
+    else delete dom.apiStatus.dataset.state;
+}
+
+// `resetInputs` is only true right after a save or clear. This runs on a timer
+// as well, and must never blank a field somebody is typing into.
+function renderModelPanel({ resetInputs = false } = {}) {
+    const hasKey = Boolean(modelSettings.getKey());
+    if (resetInputs) {
+        // The field never shows the key back — only that one is saved.
+        dom.apiKey.value = "";
+    }
+    if (document.activeElement !== dom.apiModel) {
+        dom.apiModel.value = modelSettings.getModel() || DEFAULT_MODEL;
+    }
+    dom.apiEnabled.checked = modelSettings.isEnabled();
+    dom.apiKey.placeholder = hasKey
+        ? `saved: ${modelSettings.maskedKey()}`
+        : "paste here, stays on this machine";
+
+    const s = brain.stats;
+    const rows = {
+        status: hasKey ? (modelSettings.isEnabled() ? "active" : "key saved, disabled") : "local generator only",
+        "calls made": s.calls,
+        succeeded: s.ok,
+        failed: s.failed,
+        "skipped (rate limit)": s.skipped
+    };
+    dom.apiStats.innerHTML = Object.entries(rows)
+        .map(([key, value]) => `<dt>${escapeHtml(key)}</dt><dd>${escapeHtml(value)}</dd>`)
+        .join("");
+    if (s.lastError) {
+        dom.apiStats.insertAdjacentHTML("beforeend",
+            `<dt>last error</dt><dd>${escapeHtml(String(s.lastError).slice(0, 80))}</dd>`);
+    }
+}
+
+function wireModelPanel() {
+    dom.apiSave.addEventListener("click", () => {
+        const value = dom.apiKey.value.trim();
+        if (!value) {
+            setApiStatus("nothing to save — paste a key first", "bad");
+            return;
+        }
+        modelSettings.setKey(value);
+        modelSettings.setModel(dom.apiModel.value.trim() || DEFAULT_MODEL);
+        // Clear it out of the DOM immediately so it is not sitting in a field.
+        applyBrain();
+        renderModelPanel({ resetInputs: true });
+        setApiStatus("key saved to this browser. try 'test connection'.", "ok");
+    });
+
+    dom.apiClear.addEventListener("click", () => {
+        modelSettings.clearKey();
+        applyBrain();
+        renderModelPanel({ resetInputs: true });
+        setApiStatus("key forgotten. back to the local generator.", "ok");
+    });
+
+    dom.apiTest.addEventListener("click", async () => {
+        if (dom.apiKey.value.trim()) {
+            modelSettings.setKey(dom.apiKey.value.trim());
+            dom.apiKey.value = "";
+        }
+        modelSettings.setModel(dom.apiModel.value.trim() || DEFAULT_MODEL);
+        applyBrain();
+        setApiStatus("testing…", "busy");
+        const result = await brain.test();
+        setApiStatus(result.message, result.ok ? "ok" : "bad");
+        renderModelPanel({ resetInputs: true });
+    });
+
+    dom.apiEnabled.addEventListener("change", () => {
+        modelSettings.setEnabled(dom.apiEnabled.checked);
+        applyBrain();
+        renderModelPanel();
+    });
+
+    dom.apiModel.addEventListener("change", () => {
+        modelSettings.setModel(dom.apiModel.value.trim() || DEFAULT_MODEL);
+        renderModelPanel();
+    });
+}
+
+// The simulation only holds a brain when there is actually a usable key.
+function applyBrain() {
+    if (state.sim) state.sim.brain = brain.available ? brain : null;
+}
 
 function renderClock() {
     const clock = state.world.clockLabel();
@@ -510,12 +614,13 @@ function wireEvents() {
         if (!button) return;
         state.tab = button.dataset.tab;
         [...button.parentElement.children].forEach((child) => child.classList.toggle("is-active", child === button));
-        for (const name of ["members", "observer", "world"]) {
+        for (const name of ["members", "observer", "world", "model"]) {
             el(`tab-${name}`).hidden = name !== state.tab;
         }
         state.dirty.members = true;
         state.dirty.feed = true;
         state.dirty.stats = true;
+        if (state.tab === "model") renderModelPanel();
     });
 
     dom.regenerate.addEventListener("click", () => {
@@ -582,6 +687,10 @@ function frame(now) {
         renderStats();
         state.dirty.stats = false;
     }
+    if (state.tab === "model" && state.dirty.model) {
+        renderModelPanel();
+        state.dirty.model = false;
+    }
 
     if (now - state.lastSave > 20000) {
         state.lastSave = now;
@@ -600,6 +709,7 @@ function startLoop() {
     setInterval(() => {
         state.dirty.members = true;
         state.dirty.sidebar = true;
+        state.dirty.model = true;
     }, 2500);
     requestAnimationFrame(frame);
 }
@@ -612,6 +722,7 @@ function startWorld(seed, handle) {
     state.world = world;
     state.sim = new Simulation(world, seed);
     attachSimulation();
+    applyBrain();
     // Build a backlog so the network looks like it was already running.
     state.sim.prime(320);
     world.note("genesis", "history primed — the network has been running without you");
@@ -633,6 +744,7 @@ function resumeWorld(world) {
     state.world = world;
     state.sim = new Simulation(world, world.seed);
     attachSimulation();
+    applyBrain();
     state.serverId = world.serverList[0].id;
     renderRail();
     selectServer(state.serverId);
@@ -647,6 +759,8 @@ function resumeWorld(world) {
 
 function init() {
     wireEvents();
+    wireModelPanel();
+    renderModelPanel();
     // Handy from the console: inspect the live world, agents and pending queue.
     window.nullspace = state;
     const saved = loadWorld();

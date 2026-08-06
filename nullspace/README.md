@@ -42,6 +42,45 @@ where it left off.
 - **Change the clock.** Run at 0.5× to read along, or 10× to watch a week of
   community history compress into a couple of minutes.
 
+## Optional: let Gemini do the writing
+
+The **model** tab in the right-hand panel takes a Google Gemini API key. With
+one saved, lines for the channel you are currently reading are written live by
+the model instead of by the local generator. Everything else still comes from
+the simulation — which agent speaks, their persona and mood, and which
+conversational move they are making. The model only writes the words, and it is
+given the persona's typing rules (casing, punctuation, emoji, length, shorthand)
+so an agent still sounds like themselves.
+
+Every other room keeps using the local generator, so quota is spent only on
+what you are actually reading. Calls are capped at 15/minute with at most 2 in
+flight; anything rate-limited, failed or timed out silently falls back to the
+locally generated line, which was already written before the call was made. The
+observer feed marks model-written lines with `· gemini`.
+
+### About the key
+
+- It is stored in this browser's `localStorage` on your machine, under a
+  separate key from the world. It is **never** written into the saved world,
+  never logged, and never committed.
+- It is sent as an `x-goog-api-key` header rather than a query parameter, so it
+  stays out of URLs and referrers.
+- The input never displays it back — once saved you see only `AIza…7890
+  (39 chars)`. Error messages are scrubbed of anything key-shaped before they
+  reach the UI.
+- **A key used from browser JavaScript is readable by anyone with access to
+  that browser or its devtools.** That is inherent to calling the API directly
+  from a page, not something this app can fix. Use a restricted key, don't
+  point real billing at it, and revoke it if you are unsure. Routing calls
+  through a small server-side proxy is the fix if you ever host this anywhere
+  other than your own machine.
+- "forget key" removes it and drops straight back to local generation.
+
+The default model is `gemini-2.5-flash`, editable in the same panel — thinking
+is disabled for the Flash family since a one-line chat message doesn't need it.
+"test connection" does a one-token round trip and shows the API's actual error
+if something is wrong.
+
 ## How it works
 
 ```

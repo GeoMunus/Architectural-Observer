@@ -1,0 +1,6 @@
+# Never commit credentials. The Gemini key is entered in the app's model panel
+# and lives in browser localStorage — nothing here should ever hold one.
+.env
+.env.*
+*.key
+secrets.json
