@@ -1,0 +1,45 @@
+{
+  "name": "observer-ao",
+  "version": "1.0.0",
+  "description": "Observer AO — Architectural Observer, mobile Android app",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node build.mjs",
+    "dev": "node build.mjs --dev",
+    "watch": "node build.mjs --watch",
+    "serve": "npx --yes http-server www -p 5173 -c-1",
+    "sync": "npm run build && npx cap sync android",
+    "apk": "npm run sync && cd android && ./gradlew assembleDebug"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GeoMunus/Architectural-Observer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GeoMunus/Architectural-Observer/issues"
+  },
+  "homepage": "https://github.com/GeoMunus/Architectural-Observer#readme",
+  "private": "true",
+  "dependencies": {
+    "@capacitor/android": "^7.6.8",
+    "@capacitor/app": "^7.1.2",
+    "@capacitor/camera": "^7.0.5",
+    "@capacitor/cli": "^7.6.8",
+    "@capacitor/core": "^7.6.8",
+    "@capacitor/device": "^7.0.5",
+    "@capacitor/filesystem": "^7.1.8",
+    "@capacitor/haptics": "^7.0.5",
+    "@capacitor/preferences": "^7.0.4",
+    "@capacitor/share": "^7.0.4",
+    "@capacitor/splash-screen": "^7.0.5",
+    "@capacitor/status-bar": "^7.0.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "playwright": "^1.62.1"
+  }
+}

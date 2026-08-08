@@ -1,0 +1,20 @@
+node_modules/
+
+# Build output of `npm run build`; regenerated on every build and sync.
+www/
+
+# Local tooling noise
+.DS_Store
+*.log
+npm-debug.log*
+.env
+.env.local
+
+# Smoke-test artifacts
+screenshots/
+test-results/
+
+# Signing material must never be committed.
+*.jks
+*.keystore
+keystore.properties

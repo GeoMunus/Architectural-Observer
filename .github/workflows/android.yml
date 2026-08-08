@@ -1,0 +1,116 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Also publish the APK as a GitHub release"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Release signing is optional: add these repository secrets and the release APK
+  # gets signed. Without them, the debug APK is the installable artifact.
+  HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+  ANDROID_VERSION_CODE: ${{ github.run_number }}
+  ANDROID_VERSION_NAME: 1.0.${{ github.run_number }}
+
+jobs:
+  build:
+    name: Assemble APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK packages
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web bundle
+        run: npm run build
+
+      - name: Smoke-test the web app
+        run: |
+          npx --yes playwright install --with-deps chromium
+          npx --yes http-server www -p 5173 -c-1 > /dev/null 2>&1 &
+          npx --yes wait-on http://127.0.0.1:5173/index.html --timeout 60000
+          CHROMIUM_PATH="$(node -e "console.log(require('playwright').chromium.executablePath())")" \
+            node scripts/smoke-test.mjs
+
+      - name: Sync Capacitor Android project
+        run: npx cap sync android
+
+      - name: Decode release keystore
+        if: env.HAS_KEYSTORE == 'true'
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.jks"
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Assemble release APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ env.HAS_KEYSTORE == 'true' && format('{0}/release.jks', runner.temp) || '' }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Stage APKs
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp android/app/build/outputs/apk/debug/app-debug.apk \
+             "dist/observer-ao-${ANDROID_VERSION_NAME}-debug.apk"
+          for apk in android/app/build/outputs/apk/release/*.apk; do
+            [ -e "$apk" ] || continue
+            cp "$apk" "dist/observer-ao-${ANDROID_VERSION_NAME}-$(basename "$apk" | sed 's/^app-//')"
+          done
+          ls -lh dist
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: observer-ao-apk
+          path: dist/*.apk
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('build-{0}', github.run_number) }}
+          name: Observer AO ${{ env.ANDROID_VERSION_NAME }}
+          files: dist/*.apk
+          generate_release_notes: true

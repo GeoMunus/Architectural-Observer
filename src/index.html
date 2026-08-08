@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#08120f">
+    <title>Observer AO</title>
+    <link rel="icon" href="./assets/icons/icon-192.png" sizes="192x192">
+    <link rel="apple-touch-icon" href="./assets/icons/icon-180.png">
+    <link rel="stylesheet" href="./assets/fonts.css">
+    <link rel="stylesheet" href="./styles/app.css">
+</head>
+<body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="bg-glow" aria-hidden="true"></div>
+
+    <header class="appbar">
+        <div class="appbar-identity">
+            <p class="eyebrow">Observer AO</p>
+            <h1>Architectural Observer</h1>
+        </div>
+        <button id="pulseBtn" class="pulse" type="button" aria-label="Run one analysis cycle">
+            <span class="pulse-dot" id="pulseDot"></span>
+            <span id="pulseLabel">Idle</span>
+        </button>
+    </header>
+
+    <div class="statstrip" role="group" aria-label="Live telemetry">
+        <div class="statstrip-item"><span>Mode</span><strong id="modeBadge">Interface</strong></div>
+        <div class="statstrip-item"><span>Cycles</span><strong id="cycleBadge">0</strong></div>
+        <div class="statstrip-item"><span>Signal</span><strong id="signalBadge">0</strong></div>
+        <div class="statstrip-item"><span>Motion</span><strong id="motionBadge">0</strong></div>
+    </div>
+
+    <main class="viewport">
+        <!-- ======================= OBSERVE ======================= -->
+        <section class="view" id="view-observe" data-view="observe">
+            <article class="card camera-card">
+                <div class="panel-head">
+                    <h2>Vision</h2>
+                    <span class="chip" id="visionChip">Interface</span>
+                </div>
+
+                <div class="camera-stage" id="cameraStage" data-active="false">
+                    <video id="cameraPreview" class="camera-preview" playsinline muted autoplay></video>
+                    <div class="camera-placeholder" id="cameraPlaceholder">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" class="camera-glyph">
+                            <path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" />
+                            <circle cx="12" cy="13" r="3.6" />
+                        </svg>
+                        <p>Camera vision is off. The observer is reading its own interface.</p>
+                    </div>
+                    <div class="camera-grid" id="cameraGrid" aria-hidden="true"></div>
+                </div>
+
+                <div class="button-row">
+                    <button id="toggleCameraBtn" class="btn btn-primary" type="button">Enable Camera Vision</button>
+                    <button id="flipCameraBtn" class="btn btn-ghost" type="button" disabled>Flip</button>
+                </div>
+                <p id="visionStatus" class="status-text">Vision source: this app's interface. Enable the camera to observe the space around the device.</p>
+            </article>
+
+            <article class="card">
+                <div class="panel-head">
+                    <h2>Mission Brief</h2>
+                </div>
+                <label class="field" for="scenarioInput">
+                    <span>Observation objective</span>
+                    <textarea id="scenarioInput" rows="4" placeholder="Example: Observe this room and identify its main structural surfaces, recurring forms, and what an architect should measure next."></textarea>
+                </label>
+                <div class="button-row">
+                    <button id="loadSampleBtn" class="btn btn-ghost" type="button">Load Sample</button>
+                    <button id="runCycleBtn" class="btn btn-primary" type="button">Run Cycle</button>
+                    <button id="autoCycleBtn" class="btn btn-ghost" type="button">Start Auto</button>
+                </div>
+            </article>
+
+            <section class="metric-grid" aria-label="Model size">
+                <article class="card metric-card"><span>Objects</span><strong id="objectsCount">0</strong></article>
+                <article class="card metric-card"><span>Events</span><strong id="eventsCount">0</strong></article>
+                <article class="card metric-card"><span>Memories</span><strong id="memoriesCount">0</strong></article>
+                <article class="card metric-card"><span>Concepts</span><strong id="conceptsCount">0</strong></article>
+                <article class="card metric-card"><span>Thoughts</span><strong id="thoughtsCount">0</strong></article>
+                <article class="card metric-card"><span>Goals</span><strong id="goalsCount">0</strong></article>
+            </section>
+
+            <article class="card">
+                <div class="panel-head">
+                    <h2>Recommended Actions</h2>
+                </div>
+                <ul id="actionsList" class="item-list" data-list-panel="actions"></ul>
+            </article>
+
+            <article class="card">
+                <div class="panel-head">
+                    <h2>Agent Lanes</h2>
+                </div>
+                <div id="agentLanes" class="agent-lanes"></div>
+            </article>
+
+            <article class="card">
+                <div class="panel-head">
+                    <h2>Snapshot</h2>
+                </div>
+                <div class="button-row">
+                    <button id="exportMemoriesBtn" class="btn btn-ghost" type="button">Export</button>
+                    <button id="importMemoriesBtn" class="btn btn-ghost" type="button">Import</button>
+                    <button id="clearBtn" class="btn btn-ghost btn-danger" type="button">Reset</button>
+                    <input id="importMemoriesInput" type="file" accept="application/json" hidden>
+                </div>
+                <p id="deviceStatus" class="status-text"></p>
+            </article>
+        </section>
+
+        <!-- ======================== GRAPH ======================== -->
+        <section class="view" id="view-graph" data-view="graph" hidden>
+            <article class="card graph-card">
+                <div class="panel-head">
+                    <h2>Architectural Graph</h2>
+                    <span class="chip" id="graphChip">0 nodes</span>
+                </div>
+                <div id="graphView" class="graph-view">
+                    <svg id="graphSvg" viewBox="0 0 480 640" role="img" aria-label="Architectural observation graph"></svg>
+                </div>
+                <p class="status-text">Drag to pan, pinch to zoom, tap a node to inspect it.</p>
+                <div class="button-row">
+                    <button id="resetGraphBtn" class="btn btn-ghost" type="button">Recenter</button>
+                </div>
+            </article>
+
+            <article class="card" id="inspector">
+                <div class="panel-head">
+                    <h2>Inspector</h2>
+                </div>
+                <dl class="inspector-grid">
+                    <dt>Node</dt>
+                    <dd id="selectedNodeLabel">None</dd>
+                    <dt>Type</dt>
+                    <dd id="selectedNodeType">—</dd>
+                    <dt>Detail</dt>
+                    <dd id="selectedNodeDetail">Tap a node to inspect the current architectural story.</dd>
+                </dl>
+            </article>
+        </section>
+
+        <!-- ======================= STREAMS ======================= -->
+        <section class="view" id="view-streams" data-view="streams" hidden>
+            <div class="segmented" role="tablist" aria-label="Stream selector">
+                <button class="segment is-active" data-stream="timeline" role="tab" aria-selected="true" type="button">Timeline</button>
+                <button class="segment" data-stream="objects" role="tab" aria-selected="false" type="button">Objects</button>
+                <button class="segment" data-stream="events" role="tab" aria-selected="false" type="button">Events</button>
+                <button class="segment" data-stream="memories" role="tab" aria-selected="false" type="button">Memories</button>
+                <button class="segment" data-stream="concepts" role="tab" aria-selected="false" type="button">Concepts</button>
+                <button class="segment" data-stream="patterns" role="tab" aria-selected="false" type="button">Patterns</button>
+                <button class="segment" data-stream="goals" role="tab" aria-selected="false" type="button">Goals</button>
+            </div>
+
+            <article class="card stream-panel" data-stream-panel="timeline">
+                <div class="panel-head"><h2>Observation Stream</h2></div>
+                <div id="timelineList" class="timeline-list"></div>
+            </article>
+            <article class="card stream-panel" data-stream-panel="objects" hidden>
+                <div class="panel-head"><h2>Objects</h2></div>
+                <ul id="objectsList" class="item-list" data-list-panel="objects"></ul>
+            </article>
+            <article class="card stream-panel" data-stream-panel="events" hidden>
+                <div class="panel-head"><h2>Events</h2></div>
+                <ul id="eventsList" class="item-list" data-list-panel="events"></ul>
+            </article>
+            <article class="card stream-panel" data-stream-panel="memories" hidden>
+                <div class="panel-head"><h2>Memories</h2></div>
+                <ul id="memoriesList" class="item-list" data-list-panel="memories"></ul>
+            </article>
+            <article class="card stream-panel" data-stream-panel="concepts" hidden>
+                <div class="panel-head"><h2>Concepts</h2></div>
+                <ul id="conceptsList" class="item-list" data-list-panel="concepts"></ul>
+            </article>
+            <article class="card stream-panel" data-stream-panel="patterns" hidden>
+                <div class="panel-head"><h2>Patterns</h2></div>
+                <ul id="patternsList" class="item-list" data-list-panel="patterns"></ul>
+            </article>
+            <article class="card stream-panel" data-stream-panel="goals" hidden>
+                <div class="panel-head"><h2>Goals</h2></div>
+                <ul id="goalsList" class="item-list" data-list-panel="goals"></ul>
+            </article>
+        </section>
+
+        <!-- ======================== CHAT ========================= -->
+        <section class="view view-chat" id="view-chat" data-view="chat" hidden>
+            <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
+            <div class="chat-suggestions" id="chatSuggestions">
+                <button class="chip-btn" data-prompt="What do you see?" type="button">What do you see?</button>
+                <button class="chip-btn" data-prompt="Describe the architecture." type="button">Architecture</button>
+                <button class="chip-btn" data-prompt="What are the risks?" type="button">Risks</button>
+                <button class="chip-btn" data-prompt="What should I do next?" type="button">Next action</button>
+            </div>
+            <div class="chat-actions">
+                <input id="chatInput" class="chat-input" type="text" placeholder="Ask the observer…" autocomplete="off" enterkeyhint="send">
+                <button id="sendChatBtn" class="btn btn-primary" type="button" aria-label="Send message">Send</button>
+            </div>
+        </section>
+    </main>
+
+    <nav class="tabbar" role="tablist" aria-label="Primary">
+        <button class="tab is-active" data-tab="observe" role="tab" aria-selected="true" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.4"/><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/></svg>
+            <span>Observe</span>
+        </button>
+        <button class="tab" data-tab="graph" role="tab" aria-selected="false" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="7" r="2.6"/><circle cx="18.5" cy="6" r="2.6"/><circle cx="12" cy="17.5" r="2.6"/><path d="M7.6 8.6 10.6 15.4M16.7 8.2 13.6 15.6M8 6.6h8"/></svg>
+            <span>Graph</span>
+        </button>
+        <button class="tab" data-tab="streams" role="tab" aria-selected="false" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h10"/></svg>
+            <span>Streams</span>
+        </button>
+        <button class="tab" data-tab="chat" role="tab" aria-selected="false" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12c0 4-3.8 7-8.5 7a10 10 0 0 1-2.7-.36L4.5 20.5l1.2-3.6A6.7 6.7 0 0 1 3.5 12c0-4 3.8-7 8.5-7s8.5 3 8.5 7Z"/></svg>
+            <span>Chat</span>
+        </button>
+    </nav>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script type="module" src="./js/main.js"></script>
+</body>
+</html>

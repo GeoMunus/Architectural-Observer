@@ -1,0 +1,903 @@
+:root {
+    --bg-0: #08120f;
+    --bg-1: #0d1f1a;
+    --bg-2: #143229;
+    --card: rgba(10, 23, 19, 0.82);
+    --card-soft: rgba(15, 38, 31, 0.7);
+    --card-border: rgba(159, 255, 198, 0.16);
+    --text: #f2fff5;
+    --muted: #a9cdb9;
+    --accent: #8df6a6;
+    --accent-2: #59dfd4;
+    --accent-3: #9fd0ff;
+    --warning: #ffd66d;
+    --danger: #ff7e6f;
+    --shadow: 0 14px 32px rgba(0, 0, 0, 0.34);
+    --tap: 46px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --tabbar-height: 62px;
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+body {
+    font-family: "Chakra Petch", system-ui, -apple-system, sans-serif;
+    color: var(--text);
+    background:
+        radial-gradient(720px 420px at 12% 0%, rgba(71, 136, 103, 0.26), transparent 52%),
+        radial-gradient(560px 320px at 92% 12%, rgba(44, 100, 85, 0.24), transparent 48%),
+        linear-gradient(170deg, var(--bg-0), var(--bg-1) 46%, var(--bg-2));
+    display: flex;
+    flex-direction: column;
+    /* Keeps the layout stable when the Android soft keyboard resizes the WebView. */
+    height: 100dvh;
+}
+
+button,
+input,
+textarea {
+    font: inherit;
+    color: inherit;
+}
+
+.bg-grid,
+.bg-glow {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.bg-grid {
+    background-image:
+        linear-gradient(rgba(190, 255, 217, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(190, 255, 217, 0.05) 1px, transparent 1px);
+    background-size: 26px 26px;
+    mask-image: radial-gradient(circle at 50% 28%, black 24%, transparent 86%);
+    opacity: 0.55;
+}
+
+.bg-glow {
+    width: 380px;
+    height: 380px;
+    margin: auto;
+    inset: auto;
+    top: 22%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(141, 246, 166, 0.16), transparent 68%);
+    filter: blur(18px);
+}
+
+/* ============================ APP BAR ============================ */
+
+.appbar {
+    position: relative;
+    z-index: 2;
+    flex: none;
+    padding: calc(var(--safe-top) + 0.7rem) calc(var(--safe-right) + 1rem) 0.55rem calc(var(--safe-left) + 1rem);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.eyebrow {
+    margin: 0;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    color: var(--accent-2);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-size: 0.66rem;
+}
+
+.appbar h1 {
+    margin: 0.12rem 0 0;
+    font-size: 1.32rem;
+    line-height: 1.1;
+    font-weight: 700;
+}
+
+.pulse {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 38px;
+    padding: 0 0.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(141, 246, 166, 0.3);
+    background: rgba(20, 52, 40, 0.82);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+}
+
+.pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 200ms ease, box-shadow 200ms ease;
+}
+
+.pulse[data-state="running"] .pulse-dot,
+.pulse[data-state="auto"] .pulse-dot {
+    background: var(--accent);
+    box-shadow: 0 0 0 4px rgba(141, 246, 166, 0.18);
+}
+
+.pulse[data-state="auto"] .pulse-dot {
+    animation: breathe 1.6s ease-in-out infinite;
+}
+
+@keyframes breathe {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.78); }
+}
+
+/* =========================== STAT STRIP ========================== */
+
+.statstrip {
+    position: relative;
+    z-index: 2;
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.4rem;
+    padding: 0.35rem calc(var(--safe-right) + 1rem) 0.6rem calc(var(--safe-left) + 1rem);
+}
+
+.statstrip-item {
+    background: linear-gradient(180deg, rgba(22, 48, 40, 0.86), rgba(10, 23, 18, 0.9));
+    border: 1px solid rgba(155, 255, 190, 0.14);
+    border-radius: 14px;
+    padding: 0.42rem 0.55rem;
+    min-width: 0;
+}
+
+.statstrip-item span {
+    display: block;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.statstrip-item strong {
+    display: block;
+    /* Scales down on narrow phones so "Interface" is never clipped. */
+    font-size: clamp(0.78rem, 3.6vw, 1rem);
+    color: var(--accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* =========================== VIEWPORT ============================ */
+
+.viewport {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    padding: 0 calc(var(--safe-right) + 1rem) calc(var(--safe-bottom) + var(--tabbar-height) + 1rem) calc(var(--safe-left) + 1rem);
+}
+
+.view {
+    display: grid;
+    gap: 0.8rem;
+    animation: fade-in 220ms ease;
+}
+
+.view[hidden] {
+    display: none;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 0.9rem;
+}
+
+.panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-bottom: 0.7rem;
+}
+
+.panel-head h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.chip {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.66rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(89, 223, 212, 0.14);
+    color: var(--accent-2);
+    white-space: nowrap;
+}
+
+.status-text {
+    margin: 0.6rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--muted);
+}
+
+/* ============================ CAMERA ============================= */
+
+.camera-stage {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    max-height: 52vh;
+    margin-inline: auto;
+    transition: aspect-ratio 240ms ease, max-height 240ms ease;
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(170, 255, 204, 0.16);
+    background:
+        radial-gradient(320px 200px at 60% 0%, rgba(89, 223, 212, 0.12), transparent 70%),
+        linear-gradient(180deg, rgba(7, 15, 11, 0.86), rgba(8, 16, 12, 0.96));
+    display: grid;
+    place-items: center;
+}
+
+/* An idle stage is only a hint, so it yields most of its height to the mission brief. */
+.camera-stage[data-active="false"] {
+    aspect-ratio: 16 / 9;
+    max-height: 30vh;
+}
+
+.camera-preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 240ms ease;
+}
+
+.camera-stage[data-active="true"] .camera-preview {
+    opacity: 1;
+}
+
+.camera-stage[data-active="true"] .camera-placeholder {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.camera-placeholder {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 0.6rem;
+    padding: 1.4rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.84rem;
+    line-height: 1.45;
+    transition: opacity 200ms ease;
+}
+
+.camera-placeholder p {
+    margin: 0;
+    max-width: 24ch;
+}
+
+.camera-glyph {
+    width: 46px;
+    height: 46px;
+    fill: none;
+    stroke: rgba(141, 246, 166, 0.6);
+    stroke-width: 1.4;
+    stroke-linejoin: round;
+}
+
+.camera-grid {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    opacity: 0;
+    transition: opacity 240ms ease;
+    pointer-events: none;
+}
+
+.camera-stage[data-active="true"] .camera-grid {
+    opacity: 1;
+}
+
+.camera-grid i {
+    border: 0.5px solid rgba(141, 246, 166, 0.16);
+    transition: background-color 320ms linear;
+}
+
+/* ============================ CONTROLS =========================== */
+
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.btn {
+    flex: 1 1 auto;
+    min-height: var(--tap);
+    min-width: 96px;
+    padding: 0 0.9rem;
+    border-radius: 13px;
+    border: 1px solid rgba(141, 246, 166, 0.34);
+    background: rgba(24, 64, 48, 0.9);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: transform 110ms ease, background 140ms ease, opacity 140ms ease;
+}
+
+.btn:active {
+    transform: scale(0.97);
+    background: rgba(33, 86, 64, 0.96);
+}
+
+.btn:disabled {
+    opacity: 0.42;
+    cursor: default;
+}
+
+.btn-primary {
+    background: linear-gradient(180deg, rgba(43, 106, 78, 0.96), rgba(24, 64, 48, 0.96));
+    border-color: rgba(141, 246, 166, 0.55);
+    color: var(--text);
+    font-weight: 600;
+}
+
+.btn-ghost {
+    border-color: rgba(182, 215, 196, 0.24);
+    background: rgba(14, 35, 27, 0.9);
+    color: var(--muted);
+}
+
+.btn-danger {
+    border-color: rgba(255, 126, 111, 0.34);
+    color: var(--danger);
+}
+
+.btn.is-active {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.field {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.field span {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+}
+
+textarea,
+.chat-input {
+    width: 100%;
+    border: 1px solid rgba(159, 255, 198, 0.18);
+    border-radius: 13px;
+    background: rgba(7, 15, 12, 0.75);
+    color: var(--text);
+    padding: 0.7rem 0.8rem;
+    outline: none;
+    /* 16px stops Android from zooming the viewport on focus. */
+    font-size: 16px;
+}
+
+textarea {
+    min-height: 96px;
+    resize: vertical;
+    line-height: 1.45;
+}
+
+textarea:focus,
+.chat-input:focus {
+    border-color: rgba(89, 223, 212, 0.65);
+    box-shadow: 0 0 0 3px rgba(89, 223, 212, 0.12);
+}
+
+/* ============================ METRICS ============================ */
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.55rem;
+}
+
+.metric-card {
+    padding: 0.65rem 0.7rem;
+    border-radius: 15px;
+}
+
+.metric-card span {
+    display: block;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.metric-card strong {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 1.28rem;
+    color: var(--accent);
+}
+
+/* ========================== AGENT LANES ========================== */
+
+.agent-lanes {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.agent-lane {
+    background: var(--card-soft);
+    border: 1px solid rgba(159, 255, 198, 0.13);
+    border-radius: 14px;
+    padding: 0.7rem 0.75rem;
+    display: grid;
+    gap: 0.3rem;
+}
+
+.agent-lane strong {
+    color: var(--accent);
+    font-size: 0.92rem;
+}
+
+.lane-chip {
+    width: fit-content;
+    border-radius: 999px;
+    padding: 0.16rem 0.5rem;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.64rem;
+    background: rgba(89, 223, 212, 0.14);
+    color: var(--accent-2);
+}
+
+.lane-meta {
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+/* ============================= LISTS ============================= */
+
+.item-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.item-list li,
+.timeline-item {
+    border-radius: 13px;
+    border: 1px solid rgba(183, 231, 203, 0.13);
+    background: rgba(16, 34, 28, 0.78);
+    padding: 0.6rem 0.7rem;
+}
+
+.item-title {
+    display: block;
+    font-weight: 600;
+    font-size: 0.92rem;
+    overflow-wrap: anywhere;
+}
+
+.item-subtle {
+    display: block;
+    margin-top: 0.18rem;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+}
+
+.timeline-list {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.timeline-title {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--accent-2);
+}
+
+.timeline-body {
+    margin-top: 0.28rem;
+    font-size: 0.86rem;
+    line-height: 1.42;
+    overflow-wrap: anywhere;
+}
+
+.timeline-meta {
+    margin-top: 0.3rem;
+    font-size: 0.7rem;
+    color: var(--muted);
+}
+
+/* =========================== SEGMENTED =========================== */
+
+.segmented {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 0.15rem;
+    margin-top: 0.2rem;
+}
+
+.segmented::-webkit-scrollbar {
+    display: none;
+}
+
+.segment {
+    flex: none;
+    min-height: 38px;
+    padding: 0 0.85rem;
+    border-radius: 999px;
+    border: 1px solid rgba(182, 215, 196, 0.2);
+    background: rgba(14, 35, 27, 0.88);
+    color: var(--muted);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.74rem;
+    white-space: nowrap;
+}
+
+.segment.is-active {
+    background: rgba(30, 78, 58, 0.95);
+    border-color: rgba(141, 246, 166, 0.5);
+    color: var(--text);
+}
+
+.stream-panel[hidden] {
+    display: none;
+}
+
+/* ============================= GRAPH ============================= */
+
+.graph-view {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(170, 255, 204, 0.16);
+    background:
+        radial-gradient(360px 220px at 60% -6%, rgba(89, 223, 212, 0.12), transparent 70%),
+        linear-gradient(180deg, rgba(7, 15, 11, 0.8), rgba(8, 16, 12, 0.95));
+    height: min(62vh, 520px);
+    touch-action: none;
+}
+
+#graphSvg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.node-label {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 9.5px;
+    fill: #eaffef;
+    text-anchor: middle;
+    pointer-events: none;
+}
+
+.edge-line {
+    stroke: rgba(141, 246, 166, 0.34);
+    stroke-width: 1.6;
+}
+
+.node-shape {
+    cursor: pointer;
+}
+
+.node-shape.selected {
+    stroke: #ffffff;
+    stroke-width: 2.5;
+}
+
+.inspector-grid {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 68px 1fr;
+    gap: 0.45rem 0.7rem;
+}
+
+.inspector-grid dt {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    color: var(--accent-2);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.inspector-grid dd {
+    margin: 0;
+    line-height: 1.42;
+    font-size: 0.88rem;
+    overflow-wrap: anywhere;
+}
+
+/* ============================== CHAT ============================= */
+
+.view-chat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    min-height: calc(100dvh - 210px);
+}
+
+.chat-messages {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding-top: 0.3rem;
+}
+
+.chat-msg {
+    max-width: 88%;
+    border-radius: 15px;
+    border: 1px solid rgba(183, 231, 203, 0.14);
+    background: rgba(16, 34, 28, 0.82);
+    padding: 0.65rem 0.78rem;
+}
+
+.chat-msg-user {
+    align-self: flex-end;
+    background: rgba(28, 62, 74, 0.82);
+    border-color: rgba(159, 208, 255, 0.22);
+}
+
+.chat-msg-role {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.05em;
+    color: var(--accent-2);
+}
+
+.chat-msg-user .chat-msg-role {
+    color: var(--accent-3);
+}
+
+.chat-msg-body {
+    margin-top: 0.28rem;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.chat-suggestions {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex: none;
+}
+
+.chat-suggestions::-webkit-scrollbar {
+    display: none;
+}
+
+.chip-btn {
+    flex: none;
+    min-height: 36px;
+    padding: 0 0.75rem;
+    border-radius: 999px;
+    border: 1px solid rgba(89, 223, 212, 0.26);
+    background: rgba(16, 44, 42, 0.85);
+    color: var(--accent-2);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    white-space: nowrap;
+}
+
+.chat-actions {
+    flex: none;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+    padding-bottom: 0.2rem;
+}
+
+.chat-actions .btn {
+    flex: none;
+    min-width: 74px;
+}
+
+/* ============================= TABBAR ============================ */
+
+.tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.15rem;
+    padding: 0.3rem calc(var(--safe-right) + 0.5rem) calc(var(--safe-bottom) + 0.3rem) calc(var(--safe-left) + 0.5rem);
+    background: rgba(6, 15, 12, 0.94);
+    border-top: 1px solid rgba(159, 255, 198, 0.14);
+    backdrop-filter: blur(12px);
+}
+
+.tab {
+    display: grid;
+    justify-items: center;
+    gap: 0.14rem;
+    min-height: 52px;
+    padding: 0.35rem 0.2rem;
+    border: none;
+    border-radius: 13px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.tab svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.tab.is-active {
+    color: var(--accent);
+    background: rgba(30, 78, 58, 0.55);
+}
+
+/* ============================= TOAST ============================= */
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--safe-bottom) + var(--tabbar-height) + 0.9rem);
+    transform: translateX(-50%) translateY(8px);
+    z-index: 10;
+    max-width: min(88vw, 420px);
+    padding: 0.65rem 0.9rem;
+    border-radius: 13px;
+    border: 1px solid rgba(141, 246, 166, 0.28);
+    background: rgba(12, 32, 25, 0.97);
+    color: var(--text);
+    font-size: 0.82rem;
+    line-height: 1.4;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transition: opacity 200ms ease, transform 200ms ease;
+    pointer-events: none;
+}
+
+.toast.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast[hidden] {
+    display: none;
+}
+
+/* =========================== SCROLLBARS ========================== */
+
+.viewport::-webkit-scrollbar {
+    width: 6px;
+}
+
+.viewport::-webkit-scrollbar-thumb {
+    background: rgba(89, 223, 212, 0.4);
+    border-radius: 999px;
+}
+
+/* ======================== LARGER SURFACES ======================== */
+
+@media (min-width: 600px) {
+    .metric-grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+
+    .agent-lanes {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .camera-stage {
+        aspect-ratio: 16 / 10;
+        max-height: 44vh;
+    }
+
+    .appbar h1 {
+        font-size: 1.5rem;
+    }
+}
+
+@media (min-width: 900px) {
+    .viewport {
+        padding-inline: max(calc(var(--safe-left) + 1rem), calc((100vw - 880px) / 2));
+    }
+
+    .agent-lanes {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+/* Landscape phones have very little vertical room to spare. */
+@media (max-height: 520px) and (orientation: landscape) {
+    .camera-stage {
+        aspect-ratio: auto;
+        height: 46vh;
+        max-height: none;
+    }
+
+    .statstrip {
+        padding-bottom: 0.35rem;
+    }
+
+    .appbar h1 {
+        font-size: 1.05rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

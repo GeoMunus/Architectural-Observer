@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Observer AO brand palette; overrides the Capacitor library defaults. -->
+    <color tools:ignore="UnusedResources" name="colorPrimary">#0d1f1a</color>
+    <color tools:ignore="UnusedResources" name="colorPrimaryDark">#08120f</color>
+    <color tools:ignore="UnusedResources" name="colorAccent">#8df6a6</color>
+    <color name="observerBackground">#08120f</color>
+</resources>
