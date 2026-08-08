@@ -99,14 +99,15 @@ project and regenerates the Capacitor Gradle includes, which are not committed.
 ### Tests
 
 ```bash
-npm run build && npm run serve &
-node scripts/smoke-test.mjs
+npm test                              # build, then run the smoke test
+SMOKE_SHOTS=./screenshots npm test    # also write screenshots of each tab
 ```
 
-The smoke test drives the app in a mobile-sized Chromium: it runs cycles, taps graph
-nodes, switches tabs and streams, exercises chat, verifies persistence across a reload,
-checks every tab for horizontal overflow, and runs camera vision against Chromium's
-fake capture device. CI runs it before assembling any APK.
+The smoke test serves `www/` itself and drives the app in a mobile-sized Chromium: it
+runs cycles, taps graph nodes, switches tabs and streams, exercises chat, verifies
+persistence across a reload, checks every tab for horizontal overflow, and runs camera
+vision against Chromium's fake capture device. It exits non-zero on any page error, and
+CI runs it before assembling any APK.
 
 ### Regenerating icons
 

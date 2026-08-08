@@ -4,7 +4,7 @@
   "description": "Observer AO — Architectural Observer, mobile Android app",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run build && node scripts/smoke-test.mjs",
     "build": "node build.mjs",
     "dev": "node build.mjs --dev",
     "watch": "node build.mjs --watch",

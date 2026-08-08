@@ -61,8 +61,6 @@ jobs:
       - name: Smoke-test the web app
         run: |
           npx --yes playwright install --with-deps chromium
-          npx --yes http-server www -p 5173 -c-1 > /dev/null 2>&1 &
-          npx --yes wait-on http://127.0.0.1:5173/index.html --timeout 60000
           CHROMIUM_PATH="$(node -e "console.log(require('playwright').chromium.executablePath())")" \
             node scripts/smoke-test.mjs
 
