@@ -125,8 +125,13 @@ export async function exitApp() {
 }
 
 /**
- * Blob downloads do nothing inside an Android WebView, so a snapshot is written to
- * app storage and then handed to the system share sheet.
+ * Blob downloads do nothing inside an Android WebView, so a snapshot is staged on disk
+ * and handed to the system share sheet, which is where the user chooses a real
+ * destination (Drive, Files, mail).
+ *
+ * The cache directory is deliberate: public Documents is unwritable under scoped
+ * storage on Android 10+, while the cache dir needs no permission on any version and
+ * is already covered by the app's FileProvider paths.
  */
 export async function saveAndShareSnapshot(fileName, contents) {
     if (!isNative) {
@@ -145,21 +150,22 @@ export async function saveAndShareSnapshot(fileName, contents) {
     const written = await Filesystem.writeFile({
         path: fileName,
         data: contents,
-        directory: Directory.Documents,
+        directory: Directory.Cache,
         encoding: Encoding.UTF8,
         recursive: true
     });
 
     try {
+        // Only `files` is passed: adding `text` makes the intent a text share that
+        // some targets then handle without the attachment.
         await Share.share({
             title: "Observer AO snapshot",
-            text: `Observer AO state export (${fileName})`,
-            url: written.uri,
-            dialogTitle: "Share snapshot"
+            files: [written.uri],
+            dialogTitle: "Save or share snapshot"
         });
         return { shared: true, path: written.uri };
-    } catch {
-        return { shared: false, path: written.uri };
+    } catch (error) {
+        return { shared: false, path: written.uri, reason: error?.message || "cancelled" };
     }
 }
 

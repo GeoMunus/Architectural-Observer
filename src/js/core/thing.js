@@ -1,6 +1,8 @@
+import { uuid } from "./id.js";
+
 export class Thing{
     constructor(type, properties={}){
-        this.id = crypto.randomUUID();
+        this.id = uuid();
         this.type = type;
         this.properties = properties;
     }

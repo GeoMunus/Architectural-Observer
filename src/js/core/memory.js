@@ -1,6 +1,8 @@
+import { uuid } from "./id.js";
+
 export class Memory{
     constructor(){
-        this.id = crypto.randomUUID();
+        this.id = uuid();
         this.objects = [];
         this.events = [];
         this.importance = 0;

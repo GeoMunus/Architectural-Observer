@@ -1,4 +1,5 @@
 import { VISION_CAMERA, VISION_INTERFACE, World } from "./core/world.js";
+import { uuid } from "./core/id.js";
 import { VisionAgent } from "./agents/visionAgent.js";
 import { SensorAgent } from "./agents/sensorAgent.js";
 import { EventAgent } from "./agents/eventAgent.js";
@@ -152,7 +153,7 @@ function applySnapshot(data) {
 
 function timelineItem(type, title, detail) {
     return {
-        id: `${type}-${crypto.randomUUID()}`,
+        id: `${type}-${uuid()}`,
         type,
         title,
         detail,
@@ -302,7 +303,11 @@ async function exportSnapshot() {
 
     try {
         const result = await saveAndShareSnapshot(fileName, JSON.stringify(snapshotForStorage(), null, 2));
-        shell.toast(result.shared ? "Snapshot shared." : `Snapshot saved to ${fileName}`);
+        shell.toast(result.shared
+            ? "Snapshot shared."
+            : isNative
+                ? "Snapshot ready, but sharing was dismissed. Export again to choose a destination."
+                : `Snapshot saved as ${fileName}`);
     } catch (error) {
         shell.toast(`Export failed: ${error.message}`);
     }

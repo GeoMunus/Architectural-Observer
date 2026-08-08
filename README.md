@@ -18,6 +18,10 @@ Every push builds an APK in GitHub Actions.
 4. Android will warn about installing from an unknown source — allow it for your
    browser or file manager, since the APK is not distributed through Play.
 
+On first launch, tap **Enable Camera Vision** and grant the camera permission to let the
+observer read the room. The app is fully usable without it — it will observe its own
+interface instead.
+
 The debug APK is signed with Android's standard debug key, which is enough to install
 and run but not to publish. See [Release signing](#release-signing) for a store-ready build.
 
