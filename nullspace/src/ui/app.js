@@ -7,6 +7,7 @@ import { DOMAIN_BY_ID } from "../data/topics.js";
 import { VOICE_PROFILES } from "../data/voice.js";
 import { GeminiBrain, settings as modelSettings, DEFAULT_MODEL } from "../engine/brain.js";
 import { attachScrollbar } from "./scrollbar.js";
+import { pinViewport, preservingScroll } from "./viewport.js";
 
 const VOICE_LABEL = Object.fromEntries(VOICE_PROFILES.map((v) => [v.id, v.label]));
 
@@ -144,7 +145,7 @@ function renderSidebar() {
             </button>`;
         }
     }
-    dom.channels.innerHTML = html;
+    preservingScroll(dom.channels, () => { dom.channels.innerHTML = html; });
 }
 
 function renderMe() {
@@ -359,23 +360,26 @@ function renderMembers() {
         </button>`;
     };
 
-    dom.members.innerHTML = `
-        <div class="member-group">around — ${online.length}</div>
-        ${online.map(row).join("")}
-        <div class="member-group">offline — ${offline.length}</div>
-        ${offline.map(row).join("")}`;
+    preservingScroll(dom.members, () => {
+        dom.members.innerHTML = `
+            <div class="member-group">around — ${online.length}</div>
+            ${online.map(row).join("")}
+            <div class="member-group">offline — ${offline.length}</div>
+            ${offline.map(row).join("")}`;
+    });
 }
 
 function renderFeed() {
     const { world } = state;
     const entries = world.log.slice(-45).reverse();
-    dom.feed.innerHTML = entries.map((entry) => {
+    const feedHtml = entries.map((entry) => {
         const stamp = world.stampFor(entry.minute);
         const why = entry.rationale ? `<span>${escapeHtml(entry.rationale)}</span>` : "";
         const src = entry.source === "gemini" ? ' <span class="src">· gemini</span>' : "";
         return `<li data-kind="${entry.kind}"><b>${escapeHtml(entry.text)}${src}</b>${why}
             <span>day ${stamp.day} · ${stamp.text}${entry.move ? ` · move: ${escapeHtml(entry.move)}` : ""}</span></li>`;
     }).join("");
+    preservingScroll(dom.feed.parentElement, () => { dom.feed.innerHTML = feedHtml; });
 }
 
 function renderStats() {
@@ -806,6 +810,7 @@ function resumeWorld(world) {
 }
 
 function init() {
+    pinViewport();
     wireEvents();
     scrollbar = attachScrollbar(dom.messages, dom.scrollbar, dom.scrollThumb);
     wireModelPanel();

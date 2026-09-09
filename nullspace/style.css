@@ -30,6 +30,9 @@
 html, body {
     height: 100%;
     margin: 0;
+    /* Stops a swipe at the end of any inner list from rubber-banding the whole
+       page behind the app. */
+    overscroll-behavior: none;
 }
 
 body {
@@ -48,7 +51,11 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
 
 .boot {
     position: fixed;
-    inset: 0;
+    left: 0;
+    right: 0;
+    top: var(--app-top, 0px);
+    height: var(--app-h, 100svh);
+    overflow-y: auto;
     display: grid;
     place-items: center;
     background:
@@ -152,9 +159,16 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
 .app {
     display: grid;
     grid-template-columns: 68px 236px minmax(0, 1fr) 288px;
-    height: 100vh;
-    /* dvh tracks the shrinking viewport when mobile browser chrome hides. */
-    height: 100dvh;
+    /* Fixed to the visible area rather than merely sized to it, so nothing —
+       page scroll, keyboard, or the address bar collapsing — can shift it.
+       --app-h/--app-top come from visualViewport (see ui/viewport.js); the svh
+       fallback is the stable viewport unit, unlike dvh which changes as
+       browser chrome hides and would resize the shell mid-scroll. */
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: var(--app-top, 0px);
+    height: var(--app-h, 100svh);
     /* The single implicit row would be auto-sized, letting a tall column grow
        past the viewport instead of scrolling inside it — which pushed the
        composer off the bottom of the screen in any busy channel. minmax(0,1fr)
@@ -263,6 +277,7 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
 
 .channels {
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 10px 8px 20px;
 }
 
@@ -442,6 +457,8 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
 
 .messages {
     overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     padding: 18px 24px 4px 18px;
     scroll-behavior: smooth;
     /* The native bar is replaced by .scrollbar below; two would be absurd. */
@@ -733,6 +750,7 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
 
 .panel__body {
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 12px;
 }
 
@@ -875,7 +893,10 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
 
 .profile {
     position: fixed;
-    inset: 0;
+    left: 0;
+    right: 0;
+    top: var(--app-top, 0px);
+    height: var(--app-h, 100svh);
     background: rgba(4, 5, 8, 0.68);
     display: grid;
     place-items: center;

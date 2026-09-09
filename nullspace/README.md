@@ -82,6 +82,13 @@ Then find the computer's LAN address (`ipconfig getifaddr en0` on macOS,
 `http://<that-address>:8080` on the phone. Both devices need to be on the same
 network, and some networks block this — a "guest" wifi usually will.
 
+The shell is pinned to the *visible* area rather than to a viewport unit. It is
+`position: fixed` and takes its height and offset from `visualViewport`, because
+`100dvh` changes as the address bar hides and iOS scrolls the layout viewport
+instead of resizing it when the keyboard opens — either of which slides a
+"fixed" layout around. Inner lists use `overscroll-behavior: contain` so a swipe
+at the end of one cannot rubber-band the page behind it.
+
 Two things worth knowing on mobile: the simulation runs off `requestAnimationFrame`,
 so it pauses when you switch tabs or lock the screen and resumes where it left
 off rather than fast-forwarding. And leaving it running at 10× will use battery
