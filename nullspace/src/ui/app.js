@@ -33,6 +33,8 @@ const dom = {
     clock: el("clock"),
     speeds: el("speeds"),
     togglePanel: el("togglePanel"),
+    toggleChannels: el("toggleChannels"),
+    scrim: el("scrim"),
     panel: el("panel"),
     members: el("tab-members"),
     feed: el("feed"),
@@ -208,7 +210,7 @@ function messageHtml(world, message, previous) {
     const meta = grouped ? "" : `<div class="msg__head">
             <span class="msg__author" data-agent="${author.id}" style="color: hsl(${author.hue} 65% 72%)">${escapeHtml(author.displayName)}</span>
             ${roleTag}
-            <span class="msg__time">day ${stamp.day} · ${stamp.text}</span>
+            <span class="msg__time"><span class="msg__day">day ${stamp.day} · </span>${stamp.text}</span>
         </div>`;
 
     return `<div class="${classes.join(" ")}" data-message="${message.id}">
@@ -543,11 +545,30 @@ function showProfile(agentId) {
 
 // ------------------------------------------------------------- interactions
 
-function selectServer(serverId) {
+// Below 1180px the panel is a drawer; below 900px the channel sidebar is too.
+const panelIsDrawer = () => window.matchMedia("(max-width: 1180px)").matches;
+const channelsAreDrawer = () => window.matchMedia("(max-width: 900px)").matches;
+
+function setDrawer(which) {
+    if (which) dom.app.dataset.drawer = which;
+    else delete dom.app.dataset.drawer;
+    dom.scrim.hidden = !which;
+}
+
+function toggleDrawer(which) {
+    setDrawer(dom.app.dataset.drawer === which ? null : which);
+}
+
+function selectServer(serverId, { fromUser = false } = {}) {
     state.serverId = serverId;
     const channels = state.world.channelsOf(serverId);
     const first = channels.find((c) => c.name === "general") || channels[0];
+    const wantChannelList = fromUser && channelsAreDrawer();
     selectChannel(first ? first.id : null);
+    // selectChannel closes the drawer; deliberately switching servers on a
+    // phone is the one moment you do want the channel list. On first load you
+    // want the conversation, not a menu over it.
+    if (wantChannelList) setDrawer("channels");
     renderRail();
     state.dirty.members = true;
 }
@@ -558,6 +579,7 @@ function selectChannel(channelId) {
     const channel = state.world.channels[channelId];
     if (channel) channel.unread = 0;
     typingKey = "";
+    if (channelsAreDrawer()) setDrawer(null);
     renderChannelFull();
     renderTyping();
     state.dirty.sidebar = true;
@@ -566,7 +588,7 @@ function selectChannel(channelId) {
 function wireEvents() {
     dom.rail.addEventListener("click", (event) => {
         const button = event.target.closest("[data-server]");
-        if (button) selectServer(button.dataset.server);
+        if (button) selectServer(button.dataset.server, { fromUser: true });
     });
 
     dom.channels.addEventListener("click", (event) => {
@@ -586,7 +608,9 @@ function wireEvents() {
     });
 
     document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") dom.profile.hidden = true;
+        if (event.key !== "Escape") return;
+        if (!dom.profile.hidden) dom.profile.hidden = true;
+        else setDrawer(null);
     });
 
     dom.composer.addEventListener("submit", (event) => {
@@ -605,8 +629,22 @@ function wireEvents() {
     });
 
     dom.togglePanel.addEventListener("click", () => {
+        if (panelIsDrawer()) {
+            toggleDrawer("panel");
+            return;
+        }
         const hidden = dom.app.dataset.panel === "hidden";
         dom.app.dataset.panel = hidden ? "shown" : "hidden";
+    });
+
+    dom.toggleChannels.addEventListener("click", () => toggleDrawer("channels"));
+    dom.scrim.addEventListener("click", () => setDrawer(null));
+
+    // A drawer left open across a resize would be stranded off-screen.
+    window.addEventListener("resize", () => {
+        const open = dom.app.dataset.drawer;
+        if (open === "channels" && !channelsAreDrawer()) setDrawer(null);
+        if (open === "panel" && !panelIsDrawer()) setDrawer(null);
     });
 
     dom.panel.querySelector(".panel__tabs").addEventListener("click", (event) => {

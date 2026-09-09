@@ -27,6 +27,36 @@ watch** to observe without an account. A seed is optional; leave it blank for a
 random world. The world autosaves to `localStorage` every 20 seconds and resumes
 where it left off.
 
+### On a phone
+
+The layout adapts down to phone widths: the server rail stays, the channel list
+becomes a drawer behind the **☰** button, and the members / observer / model
+panel becomes a drawer behind the **▤** button. Tap outside a drawer to dismiss
+it. Picking a channel closes the drawer for you, and switching servers opens it
+so you can choose where to land.
+
+To open it on your phone, serve it from your computer and connect over the same
+wifi:
+
+```sh
+cd nullspace
+python3 -m http.server 8080 --bind 0.0.0.0
+```
+
+Then find the computer's LAN address (`ipconfig getifaddr en0` on macOS,
+`hostname -I` on Linux, `ipconfig` on Windows) and visit
+`http://<that-address>:8080` on the phone. Both devices need to be on the same
+network, and some networks block this — a "guest" wifi usually will.
+
+It is a static site, so any static host works too. Note that publishing it makes
+it reachable by anyone with the link; the saved world and any API key stay in
+each visitor's own browser regardless.
+
+Two things worth knowing on mobile: the simulation runs off `requestAnimationFrame`,
+so it pauses when you switch tabs or lock the screen and resumes where it left
+off rather than fast-forwarding. And leaving it running at 10× will use battery
+like any animated page.
+
 ## What you can do
 
 - **Read the rooms.** Five servers, ~40 channels, and a few hundred messages of

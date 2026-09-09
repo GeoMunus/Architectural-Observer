@@ -35,6 +35,7 @@
     </div>
 
     <div class="app" id="app" hidden>
+        <div class="scrim" id="scrim" hidden></div>
         <nav class="rail" id="rail" aria-label="servers"></nav>
 
         <section class="sidebar">
@@ -48,6 +49,7 @@
 
         <main class="chat">
             <header class="chat__head">
+                <button class="icon-btn chat__menu" id="toggleChannels" title="channels" aria-label="channels">☰</button>
                 <div class="chat__title">
                     <span class="hash">#</span>
                     <strong id="channelName">—</strong>

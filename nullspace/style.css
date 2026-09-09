@@ -153,10 +153,26 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
     display: grid;
     grid-template-columns: 68px 236px minmax(0, 1fr) 288px;
     height: 100vh;
+    /* dvh tracks the shrinking viewport when mobile browser chrome hides. */
+    height: 100dvh;
+    max-width: 100vw;
+    overflow-x: hidden;
 }
 
-.app[data-panel="hidden"] { grid-template-columns: 68px 236px minmax(0, 1fr) 0; }
-.app[data-panel="hidden"] .panel { display: none; }
+/* The panel is a real column only when there is room for one; below that it
+   becomes a drawer, so this collapse rule must not apply there. */
+@media (min-width: 1181px) {
+    .app[data-panel="hidden"] { grid-template-columns: 68px 236px minmax(0, 1fr) 0; }
+    .app[data-panel="hidden"] .panel { display: none; }
+}
+
+.scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 5, 8, 0.6);
+    z-index: 24;
+    animation: rise 0.15s ease both;
+}
 
 /* ---------- server rail ---------- */
 
@@ -325,13 +341,26 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
     padding: 12px 16px;
     border-bottom: 1px solid var(--line);
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+    /* Without this the nowrap title and the speed buttons push the header
+       wider than the column, which widens the whole page. */
+    min-width: 0;
+    overflow: hidden;
 }
+
+.chat__menu { display: none; flex: none; }
 
 .chat__title {
     display: flex;
     align-items: baseline;
     gap: 8px;
     min-width: 0;
+    overflow: hidden;
+}
+
+.chat__title strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .chat__title .hash { color: var(--dim); font-size: 20px; font-weight: 600; }
@@ -352,6 +381,7 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
     display: flex;
     align-items: center;
     gap: 10px;
+    flex: none;
 }
 
 .clock {
@@ -836,14 +866,87 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
 
 /* ---------- responsive ---------- */
 
-@media (max-width: 1080px) {
-    .app { grid-template-columns: 60px 200px minmax(0, 1fr); }
-    .panel { display: none; }
+/* Tablet: the panel stops being a column and becomes a right-hand drawer, so
+   members, the observer feed and the model settings stay reachable. */
+@media (max-width: 1180px) {
+    .app { grid-template-columns: 68px 236px minmax(0, 1fr); }
+
+    .panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(310px, 84vw);
+        transform: translateX(101%);
+        /* visibility keeps a closed drawer out of the tab order and away from
+           screen readers, rather than merely off-screen. */
+        visibility: hidden;
+        transition: transform 0.22s ease, visibility 0.22s;
+        z-index: 25;
+        box-shadow: -20px 0 60px rgba(0, 0, 0, 0.55);
+    }
+
+    .app[data-drawer="panel"] .panel { transform: none; visibility: visible; }
 }
 
-@media (max-width: 720px) {
-    .app { grid-template-columns: 56px minmax(0, 1fr); }
-    .sidebar { display: none; }
+/* Phone: the channel sidebar becomes a left drawer behind the ☰ button, and
+   the header sheds everything that cannot shrink. */
+@media (max-width: 900px) {
+    .app { grid-template-columns: 52px minmax(0, 1fr); }
+
+    .chat__menu { display: block; }
+
+    .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 52px;
+        width: min(258px, 74vw);
+        transform: translateX(-115%);
+        visibility: hidden;
+        transition: transform 0.22s ease, visibility 0.22s;
+        z-index: 25;
+        box-shadow: 20px 0 60px rgba(0, 0, 0, 0.55);
+    }
+
+    .app[data-drawer="channels"] .sidebar { transform: none; visibility: visible; }
+
+    .clock, .chat__purpose { display: none; }
+    .chat__head { padding: 10px 12px; gap: 8px; }
+    .chat__title strong { font-size: 15px; }
+    .speeds button { padding: 6px 7px; }
+
+    .rail { padding: 8px 0; gap: 6px; }
+    .rail__item { width: 40px; height: 40px; font-size: 17px; border-radius: 13px; }
+    .rail__item::after { left: -8px; }
+
+    .messages { padding: 12px 12px 4px; }
+    .msg { grid-template-columns: 34px minmax(0, 1fr); gap: 9px; }
+    .avatar { width: 32px; height: 32px; font-size: 15px; }
+    .composer { padding: 4px 12px 14px; }
+
+    /* 16px keeps iOS Safari from zooming in when the field takes focus. */
+    .composer input { font-size: 16px; }
+
+    .typing { padding: 0 14px; }
+
+    /* The day is already shown by the divider above each day's messages, and
+       dropping it here keeps the author line from wrapping. */
+    .msg__day { display: none; }
+}
+
+@media (max-width: 420px) {
+    /* Two speeds are enough on a phone; the rest is thumb-hostile. */
+    .speeds button[data-speed="slow"],
+    .speeds button[data-speed="fast"] { display: none; }
+
+    .msg__role { display: none; }
+}
+
+/* Touch devices have no hover, so the timestamp on grouped messages would
+   never appear at all. */
+@media (hover: none) {
+    .msg__gutter { opacity: 0.55; }
 }
 
 ::-webkit-scrollbar { width: 9px; }
