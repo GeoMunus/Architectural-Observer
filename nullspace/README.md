@@ -55,6 +55,10 @@ Pushes to that branch redeploy automatically. The `.nojekyll` file at the
 repository root tells Pages to serve the files as they are instead of running
 them through Jekyll.
 
+Once it loads, use your browser's **Add to Home Screen**. There is a web app
+manifest, so it installs with its own icon and opens without browser chrome,
+which is worth a surprising amount of screen on a phone.
+
 Note this makes the page reachable by anyone with the link. That is fine for
 what it is — but each visitor's world, and any API key they enter, live only in
 their own browser and are never part of the page.

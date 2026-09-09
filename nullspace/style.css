@@ -916,14 +916,19 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
     .chat__title strong { font-size: 15px; }
     .speeds button { padding: 6px 7px; }
 
-    .rail { padding: 8px 0; gap: 6px; }
+    .rail {
+        padding: calc(8px + env(safe-area-inset-top)) 0 calc(8px + env(safe-area-inset-bottom));
+        gap: 6px;
+    }
+
+    .chat__head { padding-top: calc(10px + env(safe-area-inset-top)); }
     .rail__item { width: 40px; height: 40px; font-size: 17px; border-radius: 13px; }
     .rail__item::after { left: -8px; }
 
     .messages { padding: 12px 12px 4px; }
     .msg { grid-template-columns: 34px minmax(0, 1fr); gap: 9px; }
     .avatar { width: 32px; height: 32px; font-size: 15px; }
-    .composer { padding: 4px 12px 14px; }
+    .composer { padding: 4px 12px calc(14px + env(safe-area-inset-bottom)); }
 
     /* 16px keeps iOS Safari from zooming in when the field takes focus. */
     .composer input { font-size: 16px; }
