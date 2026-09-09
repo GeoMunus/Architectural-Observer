@@ -1,0 +1,4105 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronicler · AI Timeline Creator</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%E2%8C%9B%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+:root {
+    --bg-0: #0b0a09;
+    --bg-1: #14110d;
+    --bg-2: #1d1813;
+    --card: rgba(28, 23, 18, 0.82);
+    --card-soft: rgba(38, 31, 24, 0.6);
+    --border: rgba(226, 184, 120, 0.18);
+    --border-strong: rgba(226, 184, 120, 0.34);
+    --text: #f6efe3;
+    --muted: #b6a790;
+    --faint: #8a7c68;
+    --accent: #e8b062;
+    --accent-2: #d98a5a;
+    --accent-3: #8fb9c9;
+    --danger: #e1705f;
+    --ok: #92c08a;
+    --shadow: 0 18px 44px rgba(0, 0, 0, 0.42);
+    --radius: 12px;
+}
+
+* { box-sizing: border-box; }
+
+/* Class-level `display` would otherwise beat the UA rule for [hidden]. */
+[hidden] { display: none !important; }
+
+html, body {
+    margin: 0;
+    min-height: 100%;
+}
+
+body {
+    font-family: "Chakra Petch", system-ui, sans-serif;
+    color: var(--text);
+    background:
+        radial-gradient(900px 520px at 10% 0%, rgba(160, 108, 48, 0.20), transparent 52%),
+        radial-gradient(700px 420px at 92% 8%, rgba(90, 110, 130, 0.16), transparent 48%),
+        linear-gradient(165deg, var(--bg-0), var(--bg-1) 55%, var(--bg-2));
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+button, input, textarea, select { font: inherit; color: inherit; }
+
+.bg-grid {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(232, 176, 98, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 176, 98, 0.05) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(circle at 50% 20%, black 20%, transparent 88%);
+    opacity: 0.6;
+    z-index: 0;
+}
+
+/* ------------------------------------------------------------------ top bar */
+
+.topbar {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: minmax(200px, auto) 1fr auto;
+    gap: 20px;
+    align-items: center;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(12, 10, 8, 0.72);
+    backdrop-filter: blur(8px);
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark { font-size: 26px; filter: saturate(1.2); }
+.brand h1 { margin: 0; font-size: 18px; letter-spacing: 0.2px; }
+
+.eyebrow {
+    margin: 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 2.4px;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.topbar-title { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.topbar-title input {
+    width: 100%;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 17px;
+    font-weight: 600;
+}
+.topbar-title input:hover { border-color: var(--border); }
+.topbar-title input:focus { outline: none; border-color: var(--accent); background: rgba(0, 0, 0, 0.28); }
+
+.meta-line {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--faint);
+    padding-left: 9px;
+}
+
+.topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ------------------------------------------------------------------ buttons */
+
+.btn {
+    border: 1px solid var(--border-strong);
+    background: linear-gradient(180deg, rgba(60, 48, 36, 0.7), rgba(34, 27, 21, 0.7));
+    color: var(--text);
+    border-radius: 9px;
+    padding: 8px 13px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.btn:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-1px); }
+.btn:active:not(:disabled) { transform: translateY(0); }
+.btn:disabled { opacity: 0.38; cursor: not-allowed; }
+
+.btn.primary {
+    background: linear-gradient(180deg, var(--accent), var(--accent-2));
+    border-color: transparent;
+    color: #241605;
+    font-weight: 600;
+}
+.btn.ghost { background: rgba(255, 255, 255, 0.03); border-color: var(--border); }
+.btn.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
+.btn.full { width: 100%; }
+.btn.tiny { padding: 4px 9px; font-size: 11.5px; border-radius: 7px; }
+
+/* ------------------------------------------------------------------- layout */
+
+.layout {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 340px minmax(0, 1fr);
+    gap: 22px;
+    padding: 22px;
+    align-items: start;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: sticky;
+    top: 22px;
+    max-height: calc(100vh - 44px);
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 15px 16px;
+    box-shadow: var(--shadow);
+}
+
+.panel h2 {
+    margin: 0 0 12px;
+    font-size: 12px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.count { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--faint); }
+
+.field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 11px; min-width: 0; }
+.field > span { font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); }
+.field.narrow { max-width: 92px; }
+.field-row { display: flex; gap: 10px; }
+.field-row .field { flex: 1; }
+
+input[type="text"], input[type="password"], input[type="search"],
+input[type="number"], textarea, select {
+    background: rgba(0, 0, 0, 0.32);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: var(--text);
+    width: 100%;
+    font-size: 13.5px;
+}
+textarea { resize: vertical; line-height: 1.45; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+select option { background: var(--bg-2); }
+
+.hint { margin: 6px 0 10px; font-size: 12px; line-height: 1.5; color: var(--faint); }
+.button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.inline-field { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.inline-field input { width: 58px; padding: 6px 8px; }
+
+/* -------------------------------------------------------------------- codex */
+
+.codex { display: flex; flex-direction: column; gap: 6px; }
+
+.codex-item {
+    display: grid;
+    grid-template-columns: 20px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 8px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: var(--card-soft);
+    cursor: pointer;
+    font-size: 13px;
+}
+.codex-item:hover { border-color: var(--border-strong); }
+.codex-item.active { border-color: var(--accent); background: rgba(232, 176, 98, 0.12); }
+.codex-item .glyph { color: var(--accent); text-align: center; }
+.codex-item .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.codex-item .status {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    color: var(--faint);
+    text-transform: uppercase;
+}
+.codex-item .status.gone { color: var(--danger); }
+
+.codex-group {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 8px 0 2px;
+}
+
+/* ------------------------------------------------------------------ library */
+
+.library { display: flex; flex-direction: column; gap: 7px; }
+
+.library-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--card-soft);
+    border: 1px solid transparent;
+    font-size: 13px;
+}
+.library-item:hover { border-color: var(--border-strong); }
+.library-item.current { border-color: var(--accent); }
+.library-item button { background: none; border: none; cursor: pointer; }
+.library-item .open { flex: 1; text-align: left; min-width: 0; }
+.library-item .open strong { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.library-item .open small { color: var(--faint); font-family: "IBM Plex Mono", monospace; font-size: 10.5px; }
+.library-item .remove { color: var(--faint); padding: 2px 6px; border-radius: 6px; }
+.library-item .remove:hover { color: var(--danger); background: rgba(225, 112, 95, 0.12); }
+
+/* --------------------------------------------------------------------- main */
+
+.main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+.main-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+.toolbar-group { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+
+.branch-notice {
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    border: 1px dashed var(--border-strong);
+    background: rgba(143, 185, 201, 0.08);
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.busy {
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--accent);
+    background: rgba(232, 176, 98, 0.1);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.busy::before {
+    content: "";
+    width: 13px; height: 13px;
+    border: 2px solid rgba(232, 176, 98, 0.35);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty {
+    padding: 40px 28px;
+    text-align: center;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+}
+.empty h2 { margin: 0 0 8px; font-size: 18px; color: var(--text); }
+.empty p { margin: 0 auto; max-width: 52ch; line-height: 1.6; font-size: 14px; }
+
+/* ----------------------------------------------------------------- timeline */
+
+.timeline { display: flex; flex-direction: column; }
+
+.era-band {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0 10px;
+}
+.era-band:first-child { margin-top: 0; }
+.era-band .era-name {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--era-color, var(--accent));
+    white-space: nowrap;
+}
+.era-band .era-rule {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--era-color, var(--accent)), transparent);
+    opacity: 0.5;
+}
+.era-band .era-span { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--faint); }
+
+.event {
+    position: relative;
+    display: grid;
+    grid-template-columns: 152px 1fr;
+    gap: 16px;
+    padding: 12px 14px 12px 0;
+    border-left: 2px solid var(--border);
+    margin-left: 8px;
+}
+.event::before {
+    content: "";
+    position: absolute;
+    left: -6px;
+    top: 20px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--bg-1);
+    border: 2px solid var(--accent);
+}
+.event[data-weight="4"]::before { width: 13px; height: 13px; left: -7.5px; }
+.event[data-weight="5"]::before { width: 16px; height: 16px; left: -9px; box-shadow: 0 0 0 4px rgba(232, 176, 98, 0.14); }
+.event[data-weight="1"]::before, .event[data-weight="2"]::before { border-color: var(--faint); }
+.event.dragging { opacity: 0.45; }
+.event.drop-target { border-left-color: var(--accent); }
+.event.selected .event-card { border-color: var(--accent); }
+
+.event-time {
+    padding-left: 12px;
+    padding-top: 13px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px;
+    color: var(--accent);
+    line-height: 1.4;
+}
+.event-time input {
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 2px 4px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px;
+    color: var(--accent);
+    width: 100%;
+}
+.event-time input:hover { border-color: var(--border); }
+.event-time input:focus { border-color: var(--accent); background: rgba(0, 0, 0, 0.3); }
+
+.event-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 15px;
+    transition: border-color 0.15s ease;
+}
+.event-card:hover { border-color: var(--border-strong); }
+
+.event-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+.event-title { margin: 0; font-size: 15.5px; font-weight: 600; line-height: 1.35; }
+.event-body { margin: 8px 0 0; font-size: 13.5px; line-height: 1.65; color: var(--muted); }
+
+.event-meta {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.chip {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: rgba(0, 0, 0, 0.22);
+    cursor: pointer;
+}
+.chip:hover { border-color: var(--accent); color: var(--text); }
+.chip.entity { border-style: dashed; }
+.chip.cause { border-color: rgba(143, 185, 201, 0.4); color: var(--accent-3); }
+.chip.source { cursor: default; opacity: 0.7; }
+.chip.pinned { border-color: var(--accent); color: var(--accent); }
+
+.event-actions { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; flex: none; }
+.event-actions .btn { opacity: 0.55; }
+.event:hover .event-actions .btn, .event.selected .event-actions .btn { opacity: 1; }
+
+.drag-handle {
+    cursor: grab;
+    color: var(--faint);
+    padding: 2px 6px;
+    user-select: none;
+    font-size: 14px;
+}
+.drag-handle:active { cursor: grabbing; }
+
+/* ------------------------------------------------------------------- editor */
+
+.event-editor {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.event-editor .field-row { gap: 10px; }
+.event-editor .tag-input { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+
+.entity-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 11px; }
+.entity-toggle {
+    font-size: 11.5px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--muted);
+    cursor: pointer;
+}
+.entity-toggle.on { border-color: var(--accent); color: var(--accent); background: rgba(232, 176, 98, 0.12); }
+
+.editor-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+
+/* -------------------------------------------------------------------- toast */
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    z-index: 20;
+    padding: 11px 18px;
+    border-radius: 10px;
+    background: rgba(20, 16, 12, 0.96);
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow);
+    font-size: 13px;
+    max-width: min(560px, 90vw);
+}
+.toast.error { border-color: var(--danger); color: #ffd9d2; }
+
+/* ------------------------------------------------------------- adaptations */
+
+@media (max-width: 1080px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; max-height: none; }
+    .topbar { grid-template-columns: 1fr; }
+    .event { grid-template-columns: 128px 1fr; gap: 10px; }
+}
+
+@media (max-width: 620px) {
+    .event { grid-template-columns: 1fr; }
+    .event-time { padding-left: 14px; padding-top: 0; }
+    .event-head { flex-direction: column; }
+    .event-actions { justify-content: flex-start; }
+}
+
+@media print {
+    .bg-grid, .sidebar, .topbar-actions, .main-toolbar, .event-actions, .toast { display: none !important; }
+    body { background: #fff; color: #111; }
+    .event-card, .panel { background: #fff; border-color: #ccc; box-shadow: none; }
+    .event-body { color: #333; }
+}
+
+</style>
+</head>
+<body>
+    <div class="bg-grid" aria-hidden="true"></div>
+
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-mark">⌛</span>
+            <div>
+                <p class="eyebrow">Chronicler</p>
+                <h1>AI Timeline Creator</h1>
+            </div>
+        </div>
+
+        <div class="topbar-title">
+            <input id="timelineTitle" type="text" placeholder="Untitled chronicle" aria-label="Timeline title">
+            <span id="timelineMeta" class="meta-line">No timeline yet — generate one to begin.</span>
+        </div>
+
+        <div class="topbar-actions">
+            <button id="undoBtn" class="btn ghost" title="Undo (Ctrl+Z)" disabled>Undo</button>
+            <button id="redoBtn" class="btn ghost" title="Redo (Ctrl+Shift+Z)" disabled>Redo</button>
+            <button id="exportBtn" class="btn ghost">Export</button>
+            <button id="importBtn" class="btn ghost">Import</button>
+            <input id="importInput" type="file" accept="application/json" hidden>
+        </div>
+    </header>
+
+    <div class="layout">
+        <aside class="sidebar">
+            <section class="panel">
+                <h2>Generate</h2>
+                <label class="field">
+                    <span>Premise</span>
+                    <textarea id="premiseInput" rows="4" placeholder="A drowned archive city where cartographers hold political power, and the maps are the only proof of who owns what."></textarea>
+                </label>
+
+                <div class="field-row">
+                    <label class="field">
+                        <span>Genre</span>
+                        <select id="genreSelect"></select>
+                    </label>
+                    <label class="field narrow">
+                        <span>Events</span>
+                        <input id="lengthInput" type="number" min="4" max="40" value="14">
+                    </label>
+                </div>
+
+                <div class="field-row">
+                    <label class="field">
+                        <span>World size</span>
+                        <select id="scaleSelect">
+                            <option value="small">Small cast</option>
+                            <option value="medium" selected>Medium cast</option>
+                            <option value="large">Large cast</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Seed</span>
+                        <input id="seedInput" type="text" placeholder="auto">
+                    </label>
+                </div>
+
+                <p id="genreBlurb" class="hint"></p>
+
+                <div class="button-row">
+                    <button id="generateBtn" class="btn primary">Generate timeline</button>
+                    <button id="surpriseBtn" class="btn ghost" title="Random premise, genre and seed">Surprise me</button>
+                </div>
+            </section>
+
+            <section class="panel">
+                <h2>Model</h2>
+                <label class="field">
+                    <span>Generated by</span>
+                    <select id="aiModeSelect">
+                        <option value="engine">Built-in engine (offline)</option>
+                        <option value="runtime">Claude (this page)</option>
+                        <option value="api">Claude (my API key)</option>
+                    </select>
+                </label>
+                <div id="apiFields" hidden>
+                    <label class="field">
+                        <span>Anthropic API key</span>
+                        <input id="apiKeyInput" type="password" placeholder="sk-ant-...">
+                    </label>
+                    <label class="field">
+                        <span>Model</span>
+                        <select id="modelSelect">
+                            <option value="claude-sonnet-5">Claude Sonnet 5</option>
+                            <option value="claude-opus-5">Claude Opus 5</option>
+                            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+                        </select>
+                    </label>
+                    <p class="hint">The key is kept in this browser only and sent straight to Anthropic. Anything typed here is readable by scripts on this page, so use a key you can rotate.</p>
+                </div>
+                <label class="field">
+                    <span>Steer the model (optional)</span>
+                    <input id="steerInput" type="text" placeholder="keep it political, no battles">
+                </label>
+                <p id="aiStatus" class="hint"></p>
+            </section>
+
+            <section class="panel">
+                <h2>Filter</h2>
+                <label class="field">
+                    <span>Search</span>
+                    <input id="searchInput" type="search" placeholder="title or text">
+                </label>
+                <div class="field-row">
+                    <label class="field">
+                        <span>Tag</span>
+                        <select id="tagFilter"><option value="">any</option></select>
+                    </label>
+                    <label class="field">
+                        <span>Min. weight</span>
+                        <select id="importanceFilter">
+                            <option value="1">any</option>
+                            <option value="2">2+</option>
+                            <option value="3">3+</option>
+                            <option value="4">4+ (major)</option>
+                            <option value="5">5 (turning points)</option>
+                        </select>
+                    </label>
+                </div>
+                <button id="clearFilterBtn" class="btn ghost full">Clear filters</button>
+            </section>
+
+            <section class="panel">
+                <h2>Codex <span id="codexCount" class="count"></span></h2>
+                <div id="codexList" class="codex"></div>
+            </section>
+
+            <section class="panel">
+                <h2>Saved <span id="libraryCount" class="count"></span></h2>
+                <div id="libraryList" class="library"></div>
+            </section>
+        </aside>
+
+        <main class="main">
+            <div class="main-toolbar">
+                <div class="toolbar-group">
+                    <button id="extendBackBtn" class="btn ghost" title="Generate earlier history">← Earlier history</button>
+                    <button id="extendFwdBtn" class="btn primary" title="Continue the timeline">Continue forward →</button>
+                </div>
+                <div class="toolbar-group">
+                    <label class="inline-field">
+                        <span>by</span>
+                        <input id="extendCount" type="number" min="1" max="12" value="4">
+                    </label>
+                    <button id="addEventBtn" class="btn ghost">+ Blank event</button>
+                </div>
+            </div>
+
+            <div id="branchNotice" class="branch-notice" hidden></div>
+            <div id="busyBar" class="busy" hidden></div>
+
+            <div id="timelineView" class="timeline"></div>
+
+            <div id="emptyState" class="empty">
+                <h2>Nothing recorded yet</h2>
+                <p>Describe a premise on the left and generate a history — or press <strong>Surprise me</strong> and see what turns up. Every event can be rewritten, re-rolled, expanded into smaller events, or forked into an alternate history.</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <script type="module">
+// Deterministic pseudo-random utilities. Every generated timeline carries the
+// seed that produced it, so re-running a generation reproduces it exactly.
+
+function hashString(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i += 1) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 0x01000193);
+    }
+    return h >>> 0;
+}
+
+function makeRng(seed) {
+    let state = typeof seed === "number" ? seed >>> 0 : hashString(String(seed));
+    if (state === 0) state = 0x9e3779b9;
+
+    const next = () => {
+        // mulberry32
+        state = (state + 0x6d2b79f5) >>> 0;
+        let t = state;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+
+    next.int = (min, max) => min + Math.floor(next() * (max - min + 1));
+    next.chance = (p) => next() < p;
+    next.pick = (list) => list[Math.floor(next() * list.length)];
+
+    next.pickWeighted = (list, weightOf) => {
+        let total = 0;
+        for (const item of list) total += Math.max(0, weightOf(item));
+        if (total <= 0) return next.pick(list);
+        let roll = next() * total;
+        for (const item of list) {
+            roll -= Math.max(0, weightOf(item));
+            if (roll <= 0) return item;
+        }
+        return list[list.length - 1];
+    };
+
+    next.shuffle = (list) => {
+        const out = list.slice();
+        for (let i = out.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(next() * (i + 1));
+            [out[i], out[j]] = [out[j], out[i]];
+        }
+        return out;
+    };
+
+    next.sample = (list, count) => next.shuffle(list).slice(0, count);
+
+    // Bell-ish distribution, useful for gaps between events.
+    next.spread = (min, max) => {
+        const t = (next() + next() + next()) / 3;
+        return Math.round(min + t * (max - min));
+    };
+
+    return next;
+}
+
+function randomSeedWord() {
+    const parts = ["ash", "vault", "ember", "helix", "tide", "quill", "gloam", "spire", "wren", "lattice", "cinder", "verge"];
+    const n = Math.floor(Math.random() * 9000) + 1000;
+    return `${parts[Math.floor(Math.random() * parts.length)]}-${n}`;
+}
+
+function uid(prefix = "id") {
+    return `${prefix}_${Math.random().toString(36).slice(2, 9)}${Date.now().toString(36).slice(-4)}`;
+}
+// ---- end rng.js ----
+
+
+// Vocabulary the generator draws on. Structure is shared across genres; the
+// word banks are what make a cyberpunk timeline read differently from a mythic
+// one while running through exactly the same narrative machinery.
+
+const PALETTES = {
+    liquid: {
+        onsets: ["l", "m", "n", "v", "s", "th", "r", "el", "ae", "il", "sy", "ly"],
+        nuclei: ["a", "e", "i", "ae", "ia", "eo", "ei", "au", "io"],
+        codas: ["l", "n", "r", "s", "th", "ne", "ra", "lis", "van", "mir"]
+    },
+    harsh: {
+        onsets: ["k", "gr", "dr", "th", "br", "kr", "v", "z", "tr", "sk", "vr"],
+        nuclei: ["a", "o", "u", "au", "ar", "or", "ur"],
+        codas: ["k", "g", "th", "rn", "sk", "dt", "kar", "gorn", "vosk", "rax"]
+    },
+    sibilant: {
+        onsets: ["s", "sh", "z", "ts", "x", "sk", "ch", "st", "sp"],
+        nuclei: ["i", "e", "y", "ia", "ei", "ie", "a", "o"],
+        codas: ["s", "sh", "x", "th", "ith", "ess", "isk", "ar", "en"]
+    },
+    guttural: {
+        onsets: ["g", "kh", "h", "ng", "b", "d", "gh", "q", "r"],
+        nuclei: ["a", "o", "u", "aa", "oo", "ua", "ou"],
+        codas: ["g", "kh", "n", "m", "gh", "dun", "bar", "qan", "hul"]
+    },
+    clipped: {
+        onsets: ["k", "t", "p", "b", "d", "j", "m", "n", "r", "v"],
+        nuclei: ["a", "e", "i", "o", "u"],
+        codas: ["n", "k", "t", "x", "l", "sk", "tt", "nn", "rr"]
+    },
+    airy: {
+        onsets: ["y", "w", "h", "f", "th", "ph", "l", "n", "s", "v", "m"],
+        nuclei: ["ia", "ea", "oa", "ai", "ei", "ou", "a", "e", "i"],
+        codas: ["l", "n", "r", "th", "wn", "ren", "lyn", "eth", "ar"]
+    }
+};
+
+const SHARED_ADJECTIVES = [
+    "Broken", "Silent", "Hollow", "Gilded", "Drowned", "Burning", "Iron", "Glass",
+    "Quiet", "Long", "Second", "Final", "Wandering", "Sleepless", "Patient", "Bitter",
+    "Nameless", "Splendid", "Ruined", "Ascendant", "Forgotten", "Waking", "Severed", "Crowned"
+];
+
+/**
+ * Every genre supplies the same slot names. The generator never hardcodes a
+ * genre; it just asks for `words.conflict`, `words.artifact`, and so on.
+ */
+const GENRES = {
+    mythic: {
+        id: "mythic",
+        label: "Age of Myth",
+        blurb: "Gods, oaths, and heroes whose mistakes become geography.",
+        palettes: ["liquid", "airy", "guttural"],
+        time: { unit: "Year", era: "of the Long Count", start: [1, 240], step: [8, 90] },
+        words: {
+            adjective: SHARED_ADJECTIVES.concat(["Golden", "Thunderous", "Star-Marked", "Sundered"]),
+            group: ["Covenant", "Host", "Bloodline", "Choir", "Circle", "Pantheon", "Tribe", "Order"],
+            role: ["Oathkeeper", "Godspeaker", "Shieldbearer", "Loomwright", "Stormcaller", "Riverborn", "Ash-Priest"],
+            placeKind: ["Vale", "Reach", "Deep", "Wastes", "Mount", "Fen", "Isles", "Gate", "Hollow"],
+            artifactKind: ["Crown", "Spear", "Loom", "Chalice", "Horn", "Mask", "Chain", "Seed"],
+            conflict: ["a blood-feud", "an open war", "a war of oaths", "a siege", "a hunt", "a reckoning"],
+            discovery: ["uncovers", "is shown", "dreams of", "stumbles into", "is led to"],
+            collapse: ["falls", "is unmade", "drowns", "is scattered", "burns", "goes silent"],
+            ruin: ["is abandoned", "burns", "is swallowed by the sea", "falls silent", "is left to the fen"],
+            force: ["the Tide Beneath", "the Long Winter", "the Hunger", "the Weaving", "the Deep Song"],
+            omen: ["twin moons rose full", "the rivers ran backward", "no bird sang for nine days", "the sea withdrew a league", "stars fell in the shape of a hand"]
+        }
+    },
+    fantasy: {
+        id: "fantasy",
+        label: "High Fantasy",
+        blurb: "Kingdoms, succession, and magic that costs more than it gives.",
+        palettes: ["liquid", "harsh", "airy"],
+        time: { unit: "Year", era: "of the Third Accord", start: [200, 1400], step: [3, 45] },
+        words: {
+            adjective: SHARED_ADJECTIVES.concat(["Thorned", "Amber", "Winterbound", "Bright"]),
+            group: ["House", "Kingdom", "Conclave", "League", "Guild", "Dominion", "Free Cities", "Coven"],
+            role: ["Archivist", "Warden", "Regent", "Hedge-Mage", "Marshal", "Cartographer", "Court Alchemist"],
+            placeKind: ["Keep", "March", "Hold", "Ford", "Wood", "Barrows", "Straits", "Spire", "Quarter"],
+            artifactKind: ["Sigil", "Codex", "Blade", "Key", "Orrery", "Reliquary", "Signet", "Bell"],
+            conflict: ["open war", "a war of succession", "a border war", "a trade war", "a purge", "a rebellion"],
+            discovery: ["recovers", "decodes", "purchases", "excavates", "is willed"],
+            collapse: ["is sacked", "is dissolved", "abdicates", "is put to the torch", "loses the field"],
+            ruin: ["is sacked", "is put to the torch", "is abandoned", "is emptied by fever", "falls"],
+            force: ["the Blight", "the Waning", "the Grey Fever", "the Unmaking", "the Long Debt"],
+            omen: ["the harvest failed twice running", "a comet stood over the capital", "every mirror in the palace cracked", "the wells turned brackish"]
+        }
+    },
+    space: {
+        id: "space",
+        label: "Space Opera",
+        blurb: "Interstellar polities, slower-than-light grudges, and inherited debt.",
+        palettes: ["clipped", "sibilant", "liquid"],
+        time: { unit: "Standard Year", era: "of the Common Reckoning", start: [2180, 4600], step: [2, 60] },
+        words: {
+            adjective: SHARED_ADJECTIVES.concat(["Outer", "Sublight", "Coreward", "Derelict"]),
+            group: ["Combine", "Directorate", "Fleet", "Consortium", "Compact", "Hegemony", "Collective", "Syndicate"],
+            role: ["Fleet Marshal", "Chief Navigator", "Xenologist", "Quartermaster", "Envoy", "Station Warden", "Drive Theorist"],
+            placeKind: ["Station", "Belt", "Reach", "Gate", "Yards", "Expanse", "Drift", "Rim", "Anchorage"],
+            artifactKind: ["Array", "Drive", "Codex", "Beacon", "Cradle", "Lattice", "Registry", "Key"],
+            conflict: ["open war", "a blockade", "a succession crisis", "a proxy war", "an embargo", "a boarding campaign"],
+            discovery: ["decrypts", "salvages", "surveys", "back-engineers", "intercepts"],
+            collapse: ["is scuttled", "goes dark", "secedes", "loses pressure", "is stripped for hulls"],
+            ruin: ["is scuttled", "goes dark", "loses pressure", "is stripped for hulls", "is evacuated"],
+            force: ["the Quiet", "the Drift", "the Cascade", "the Long Delay", "the Signal"],
+            omen: ["three relay stations answered with the same message", "the jump lanes lost eleven minutes", "a derelict arrived on its own", "every clock in the system disagreed"]
+        }
+    },
+    cyber: {
+        id: "cyber",
+        label: "Near-Future Cyberpunk",
+        blurb: "Corporate polities, leaked infrastructure, and cities that outlive their owners.",
+        palettes: ["clipped", "sibilant"],
+        time: { unit: "", era: "", start: [2029, 2094], step: [1, 9] },
+        words: {
+            adjective: SHARED_ADJECTIVES.concat(["Offshore", "Grey-Market", "Redacted", "Unlicensed"]),
+            group: ["Group", "Holdings", "Collective", "Bureau", "Cartel", "Trust", "Cooperative", "Authority"],
+            role: ["fixer", "systems architect", "compliance officer", "courier", "ripperdoc", "union steward", "forensic analyst"],
+            placeKind: ["Sprawl", "District", "Arcology", "Terminal", "Freeport", "Underlevels", "Corridor", "Zone"],
+            artifactKind: ["Ledger", "Exploit", "Prosthesis", "Archive", "Protocol", "Key", "Model", "Dataset"],
+            conflict: ["a hostile takeover", "open street war", "a lawsuit that lasts a decade", "a strike", "an information war", "a shell-company siege"],
+            discovery: ["leaks", "reverse-engineers", "buys outright", "recovers from a dead drop", "subpoenas"],
+            collapse: ["is liquidated", "loses its charter", "is bought and gutted", "declares insolvency", "is raided"],
+            ruin: ["is condemned", "is written off", "goes dark", "is cordoned and left", "burns"],
+            force: ["the Blackout", "the Churn", "the Dependency", "the Audit", "the Quiet Layoff"],
+            omen: ["the transit network refused three hundred valid passes", "an outage lasted exactly nine minutes citywide", "insurance premiums doubled overnight", "the same face appeared in unrelated footage"]
+        }
+    },
+    apocalypse: {
+        id: "apocalypse",
+        label: "After the Collapse",
+        blurb: "What people rebuild, and what they agree never to mention again.",
+        palettes: ["clipped", "harsh", "guttural"],
+        time: { unit: "Year", era: "After", start: [1, 90], step: [1, 14] },
+        words: {
+            adjective: SHARED_ADJECTIVES.concat(["Downwind", "Scavenged", "Walled", "Rationed"]),
+            group: ["Convoy", "Settlement", "Salvage Crew", "Council", "Column", "Holdfast", "Union", "Watch"],
+            role: ["water-warden", "seed-keeper", "scout", "medic", "radio operator", "quartermaster", "wall-boss"],
+            placeKind: ["Yard", "Reservoir", "Overpass", "Silo", "Green", "Crossing", "Dead Zone", "Terminus"],
+            artifactKind: ["Cache", "Generator", "Ledger", "Seed Vault", "Map", "Still", "Antenna"],
+            conflict: ["a water war", "a raid", "a siege of the walls", "a feud", "a slow starvation", "a road war"],
+            discovery: ["digs out", "trades for", "wires up", "finds intact", "restores"],
+            collapse: ["is abandoned", "burns", "runs dry", "is overrun", "empties in a season"],
+            ruin: ["is abandoned", "burns", "runs dry", "is overrun", "empties in a season"],
+            force: ["the Dry", "the Rot", "the Cold Years", "the Fever", "the Drift"],
+            omen: ["the rain came black for a week", "the herd animals moved south early", "the old sirens sounded once", "nothing came over the radio for forty days"]
+        }
+    },
+    althistory: {
+        id: "althistory",
+        label: "Alternate History",
+        blurb: "One decision goes the other way, and two centuries reorganize around it.",
+        palettes: ["clipped", "liquid"],
+        time: { unit: "", era: "", start: [1490, 1930], step: [2, 22] },
+        words: {
+            adjective: SHARED_ADJECTIVES.concat(["Provisional", "Northern", "Constitutional", "Reformed"]),
+            group: ["Republic", "Commission", "Assembly", "Company", "League", "Federation", "Ministry", "Society"],
+            role: ["minister", "engineer", "pamphleteer", "admiral", "delegate", "banker", "surveyor"],
+            placeKind: ["Territory", "Basin", "Corridor", "Port", "Junction", "Province", "Line", "Works"],
+            artifactKind: ["Treaty", "Patent", "Charter", "Engine", "Ledger", "Doctrine", "Survey"],
+            conflict: ["open war", "a tariff war", "a constitutional crisis", "a general strike", "a naval standoff", "a border dispute"],
+            discovery: ["publishes", "patents", "demonstrates", "smuggles out", "translates"],
+            collapse: ["is dissolved", "loses the vote", "defaults", "is partitioned", "resigns in full"],
+            ruin: ["is burned", "is partitioned", "is depopulated", "is abandoned to the water", "falls"],
+            force: ["the Panic", "the Long Depression", "the Reaction", "the Settlement", "the Question"],
+            omen: ["the exchange closed early three days running", "the harvest reports were falsified", "an ambassador left without ceremony", "the newspapers agreed for once"]
+        }
+    },
+    arcaneIndustrial: {
+        id: "arcaneIndustrial",
+        label: "Arcane Industrial",
+        blurb: "Magic gets standardized, regulated, and then priced out of reach.",
+        palettes: ["harsh", "liquid", "clipped"],
+        time: { unit: "Year", era: "of the Meter", start: [40, 320], step: [1, 18] },
+        words: {
+            adjective: SHARED_ADJECTIVES.concat(["Regulated", "Boilerbound", "Charter", "Leaded"]),
+            group: ["Works", "Guild", "Board", "Concern", "Union", "Institute", "Directorate", "Chapterhouse"],
+            role: ["thaumic engineer", "inspector", "line-witch", "actuary", "foreman", "licensing clerk", "safety adept"],
+            placeKind: ["Works", "Yards", "Quarter", "Line", "Foundry", "Reservoir", "Terminus", "Row"],
+            artifactKind: ["Regulator", "Engine", "Ledger", "Standard", "Conduit", "Seal", "Register"],
+            conflict: ["a strike", "a patent war", "a guild war", "an inquiry that becomes a purge", "a shutdown", "a sabotage campaign"],
+            discovery: ["standardizes", "patents", "measures for the first time", "audits", "publishes"],
+            collapse: ["is condemned", "loses its charter", "explodes", "is shuttered", "is nationalized"],
+            ruin: ["is condemned", "burns", "is shuttered", "is flooded", "is written off"],
+            force: ["the Backwash", "the Rate", "the Grey Lung", "the Overdraw", "the Standard"],
+            omen: ["every regulator in the district read the same false value", "the river ran warm in winter", "three foremen resigned the same morning", "the lamps burned green for an hour"]
+        }
+    },
+    deeptime: {
+        id: "deeptime",
+        label: "Deep Time / Precursors",
+        blurb: "A civilization reconstructed from what it left behind, mostly wrongly.",
+        palettes: ["airy", "sibilant", "guttural"],
+        time: { unit: "Cycle", era: "before present", start: [40000, 900000], step: [200, 9000] },
+        words: {
+            adjective: SHARED_ADJECTIVES.concat(["Stratified", "Pre-Collapse", "Unattested", "Terminal"]),
+            group: ["Polity", "Continuum", "Assembly", "Lineage", "Culture", "Horizon", "Complex"],
+            role: ["archivist-caste", "terraform authority", "memory-bearer", "wayfinder", "steward-line"],
+            placeKind: ["Basin", "Array", "Necropolis", "Shelf", "Vault", "Ring", "Substrate", "Terrace"],
+            artifactKind: ["Substrate", "Monument", "Registry", "Seedbank", "Lattice", "Inscription", "Core"],
+            conflict: ["a divergence", "a resource collapse", "a schism", "a containment failure", "a long attrition"],
+            discovery: ["records", "encodes", "constructs", "buries deliberately", "abandons in place"],
+            collapse: ["is depopulated", "is sealed", "falls below quorum", "ceases transmission", "is deliberately erased"],
+            ruin: ["is depopulated", "is sealed", "is buried deliberately", "ceases transmission", "is abandoned in place"],
+            force: ["the Attenuation", "the Silence", "the Substrate Failure", "the Cold Equation", "the Drawdown"],
+            omen: ["the orbital rings shed material for a century", "burial density triples in a single stratum", "inscription quality drops off sharply", "the last records are duplicates of the first"]
+        }
+    }
+};
+
+const GENRE_LIST = Object.values(GENRES);
+
+const ENTITY_KINDS = {
+    faction: { label: "Faction", icon: "◈" },
+    person: { label: "Figure", icon: "☗" },
+    place: { label: "Place", icon: "⌖" },
+    artifact: { label: "Artifact", icon: "❖" },
+    force: { label: "Force", icon: "≋" }
+};
+
+// Dramatic arc. The generator walks these in order and loops the middle acts
+// when a timeline is extended past its original length.
+const ACTS = [
+    { id: "genesis", label: "Origins", weightHint: 1 },
+    { id: "expansion", label: "Expansion", weightHint: 1 },
+    { id: "tension", label: "Fracture", weightHint: 1.2 },
+    { id: "crisis", label: "Crisis", weightHint: 1.4 },
+    { id: "cataclysm", label: "Cataclysm", weightHint: 1 },
+    { id: "aftermath", label: "Aftermath", weightHint: 1 },
+    { id: "legacy", label: "Legacy", weightHint: 1 }
+];
+
+const ERA_NAME_PATTERNS = [
+    "The {adjective} {noun}",
+    "The {noun} of {place}",
+    "The {adjective} Years",
+    "The {noun} Era",
+    "The Age of {noun}"
+];
+
+const ERA_NOUNS = {
+    genesis: ["Founding", "First Light", "Settling", "Compact", "Opening"],
+    expansion: ["Reach", "Flowering", "Long Trade", "Charter", "Widening"],
+    tension: ["Fracture", "Cold Years", "Souring", "Division", "Suspicion"],
+    crisis: ["Reckoning", "Emergency", "Breaking", "Crisis", "Turning"],
+    cataclysm: ["Burning", "Undoing", "Great Loss", "Cataclysm", "Silence"],
+    aftermath: ["Salvage", "Reconstruction", "Quiet", "Accounting", "Return"],
+    legacy: ["Inheritance", "Long Memory", "Afterward", "Settlement", "Second Light"]
+};
+// ---- end lexicon.js ----
+
+
+// World construction: turns a premise plus a seed into a cast of entities that
+// events can then be written about.
+
+
+const STOPWORDS = new Set([
+    "the", "a", "an", "and", "or", "but", "of", "in", "on", "at", "to", "for", "with", "from",
+    "that", "this", "these", "those", "it", "its", "is", "are", "was", "were", "be", "been",
+    "as", "by", "into", "about", "over", "after", "before", "their", "they", "them", "his",
+    "her", "he", "she", "we", "you", "i", "my", "our", "who", "which", "where", "when", "how",
+    "story", "timeline", "world", "about", "make", "create", "generate", "please", "some", "very"
+]);
+
+// Words that are capitalised only because a sentence started, or because they
+// are numerals. Neither makes a good name for a faction.
+const NOT_A_NAME = new Set([
+    "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+    "first", "second", "third", "last", "next", "every", "each", "both", "another",
+    "after", "before", "during", "when", "while", "since", "there", "here", "then",
+    "what", "why", "how", "where", "who", "all", "many", "most", "much", "more",
+    "new", "old", "also", "but", "and", "for", "the", "this", "that", "these", "those",
+    "it", "its", "they", "them", "their", "he", "she", "his", "her", "we", "our", "you",
+    "a", "an", "in", "on", "at", "to", "of", "if", "so", "no", "not", "some", "any"
+]);
+
+/**
+ * Pulls usable material out of whatever the user typed. Capitalised words
+ * become candidate proper names; everything else becomes motif vocabulary the
+ * event writer can weave back in, so the premise visibly shapes the output.
+ */
+function extractSeeds(premise) {
+    const text = String(premise || "").trim();
+    if (!text) return { properNouns: [], motifs: [] };
+
+    const properNouns = [];
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    for (const sentence of sentences) {
+        const words = sentence.split(/\s+/);
+        let run = [];
+        words.forEach((word, index) => {
+            const clean = word.replace(/[^A-Za-z0-9'-]/g, "");
+            const isCapped = /^[A-Z][a-z'-]+$/.test(clean) || /^[A-Z]{2,}$/.test(clean);
+            if (isCapped && !NOT_A_NAME.has(clean.toLowerCase())) {
+                run.push(clean);
+            } else {
+                if (run.length) properNouns.push(run.join(" "));
+                run = [];
+            }
+        });
+        if (run.length) properNouns.push(run.join(" "));
+    }
+
+    const rawMotifs = Array.from(
+        new Set(
+            text
+                .toLowerCase()
+                .split(/[^a-z-]+/)
+                .filter((w) => w.length > 4 && !STOPWORDS.has(w))
+        )
+    );
+    const motifs = rawMotifs;
+
+    return {
+        properNouns: Array.from(new Set(properNouns)).filter((n) => !STOPWORDS.has(n.toLowerCase())),
+        motifs: motifs.filter((w) => !NOT_A_NAME.has(w))
+    };
+}
+
+function syllable(rng, palette, allowCoda) {
+    const onset = rng.pick(palette.onsets);
+    const nucleus = rng.pick(palette.nuclei);
+    const coda = allowCoda && rng.chance(0.55) ? rng.pick(palette.codas) : "";
+    return onset + nucleus + coda;
+}
+
+function capitalize(word) {
+    return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+/**
+ * Rejects the vowel soup and consonant pile-ups that random syllable stitching
+ * produces every so often. A name a reader cannot say is a name they skip.
+ */
+function isPronounceable(name) {
+    const lower = name.toLowerCase();
+    if (/[aeiouy]{4,}/.test(lower)) return false;
+    if (/[^aeiouy]{4,}/.test(lower)) return false;
+    if (!/[aeiou]/.test(lower)) return false;
+    if (!/[^aeiouy]/.test(lower)) return false;
+    if (/(.)\1/.test(lower.slice(0, 2))) return false;
+    return true;
+}
+
+/**
+ * A namer keeps a per-world phonetic palette so that invented names sound like
+ * they come from the same language, and refuses to hand out the same name twice.
+ */
+function makeNamer(rng, genre, seeds = { properNouns: [] }) {
+    const paletteIds = rng.sample(genre.palettes, Math.min(2, genre.palettes.length));
+    const palettes = paletteIds.map((id) => PALETTES[id]);
+    const used = new Set();
+    const reserve = rng.shuffle(seeds.properNouns.slice(0, 12));
+
+    function invent(minSyllables = 2, maxSyllables = 3) {
+        const palette = rng.pick(palettes);
+        for (let attempt = 0; attempt < 40; attempt += 1) {
+            const count = rng.int(minSyllables, maxSyllables);
+            let name = "";
+            for (let i = 0; i < count; i += 1) {
+                name += syllable(rng, palette, i === count - 1);
+            }
+            name = capitalize(name.replace(/(.)\1{2,}/g, "$1$1"));
+            if (name.length >= 4 && name.length <= 12 && isPronounceable(name) && !used.has(name.toLowerCase())) {
+                used.add(name.toLowerCase());
+                return name;
+            }
+        }
+        const fallback = capitalize(syllable(rng, rng.pick(palettes), true) + rng.int(2, 99));
+        used.add(fallback.toLowerCase());
+        return fallback;
+    }
+
+    // Prefer names the user actually supplied, then fall back to invention.
+    function claim(minSyllables, maxSyllables) {
+        while (reserve.length) {
+            const candidate = reserve.shift();
+            if (!used.has(candidate.toLowerCase())) {
+                used.add(candidate.toLowerCase());
+                return candidate;
+            }
+        }
+        return invent(minSyllables, maxSyllables);
+    }
+
+    return { invent, claim, used, paletteIds };
+}
+
+function factionName(rng, genre, namer) {
+    const { adjective, group } = genre.words;
+    const roll = rng();
+    if (roll < 0.34) return `The ${rng.pick(adjective)} ${rng.pick(group)}`;
+    if (roll < 0.68) return `${namer.claim(2, 3)} ${rng.pick(group)}`;
+    return `The ${rng.pick(group)} of ${namer.claim(2, 3)}`;
+}
+
+function placeName(rng, genre, namer) {
+    const { adjective, placeKind } = genre.words;
+    const roll = rng();
+    if (roll < 0.45) return `${namer.claim(2, 3)} ${rng.pick(placeKind)}`;
+    if (roll < 0.75) return `The ${rng.pick(adjective)} ${rng.pick(placeKind)}`;
+    return namer.claim(2, 4);
+}
+
+function personName(rng, genre, namer) {
+    const given = namer.claim(2, 3);
+    if (rng.chance(0.45)) return `${given} ${namer.invent(1, 2)}`;
+    if (rng.chance(0.5)) return `${given} the ${rng.pick(genre.words.adjective)}`;
+    return given;
+}
+
+function artifactName(rng, genre, namer) {
+    const { adjective, artifactKind } = genre.words;
+    const roll = rng();
+    if (roll < 0.45) return `The ${rng.pick(adjective)} ${rng.pick(artifactKind)}`;
+    if (roll < 0.75) return `The ${rng.pick(artifactKind)} of ${namer.claim(2, 3)}`;
+    return `${namer.claim(2, 3)}'s ${rng.pick(artifactKind)}`;
+}
+
+function makeEntity(kind, name, extra = {}) {
+    return {
+        id: uid("ent"),
+        kind,
+        name,
+        epithet: extra.epithet || "",
+        status: extra.status || "active",
+        note: extra.note || "",
+        firstEventId: null
+    };
+}
+
+/**
+ * Builds the cast. Sizes are deliberately small — a timeline with six factions
+ * and thirty events reads as noise, while four factions read as a history.
+ */
+function buildWorld(rng, genre, premise, options = {}) {
+    const seeds = extractSeeds(premise);
+    const namer = makeNamer(rng, genre, seeds);
+    const scale = options.scale || "medium";
+    const sizes = {
+        small: { faction: 2, person: 3, place: 3, artifact: 2, force: 1 },
+        medium: { faction: 3, person: 5, place: 4, artifact: 3, force: 2 },
+        large: { faction: 4, person: 7, place: 6, artifact: 4, force: 2 }
+    }[scale] || { faction: 3, person: 5, place: 4, artifact: 3, force: 2 };
+
+    const entities = [];
+
+    for (let i = 0; i < sizes.faction; i += 1) {
+        entities.push(
+            makeEntity("faction", factionName(rng, genre, namer), {
+                note: `${rng.pick(["Ascendant", "Established", "Diminished", "Insular", "Expansionist"])} at the opening of the record.`
+            })
+        );
+    }
+    for (let i = 0; i < sizes.place; i += 1) {
+        // Places start unfounded so the record can show them being settled.
+        entities.push(makeEntity("place", placeName(rng, genre, namer), { status: "unknown" }));
+    }
+    for (let i = 0; i < sizes.person; i += 1) {
+        entities.push(
+            makeEntity("person", personName(rng, genre, namer), {
+                epithet: rng.pick(genre.words.role)
+            })
+        );
+    }
+    for (let i = 0; i < sizes.artifact; i += 1) {
+        // Half already exist and are waiting to be found; half have yet to be made.
+        entities.push(
+            makeEntity("artifact", artifactName(rng, genre, namer), {
+                status: i % 2 === 0 ? "hidden" : "unknown"
+            })
+        );
+    }
+    for (let i = 0; i < sizes.force; i += 1) {
+        entities.push(makeEntity("force", rng.pick(genre.words.force), { status: "latent" }));
+    }
+
+    // Bind figures to factions so allegiance shifts can matter later.
+    const factions = entities.filter((e) => e.kind === "faction");
+    entities
+        .filter((e) => e.kind === "person")
+        .forEach((person) => {
+            const home = rng.pick(factions);
+            person.affiliation = home ? home.id : null;
+        });
+
+    return { entities, namer, seeds, paletteIds: namer.paletteIds };
+}
+
+/**
+ * Mints one new entity mid-history — used when a faction splits, refugees found
+ * a settlement, or a successor state appears.
+ */
+function createEntity(rng, genre, namer, kind) {
+    switch (kind) {
+        case "faction":
+            return makeEntity("faction", factionName(rng, genre, namer));
+        case "place":
+            return makeEntity("place", placeName(rng, genre, namer), { status: "unknown" });
+        case "person":
+            return makeEntity("person", personName(rng, genre, namer), { epithet: rng.pick(genre.words.role) });
+        case "artifact":
+            return makeEntity("artifact", artifactName(rng, genre, namer), { status: "unknown" });
+        default:
+            return makeEntity("force", rng.pick(genre.words.force), { status: "latent" });
+    }
+}
+
+function blankEntity(kind, name) {
+    return makeEntity(kind, name || "Unnamed");
+}
+
+function entityIcon(kind) {
+    return (ENTITY_KINDS[kind] || {}).icon || "•";
+}
+
+function entityLabel(kind) {
+    return (ENTITY_KINDS[kind] || {}).label || kind;
+}
+// ---- end worldgen.js ----
+
+
+// Beat templates: the grammar of "things that happen in a history".
+//
+// Each beat declares the cast it needs, what must already be true for it to
+// fire, and what it changes about the world. The generator picks beats whose
+// preconditions hold, which is what makes a generated timeline read as a chain
+// of consequences instead of a shuffled list of incidents.
+
+const beat = (config) => ({
+    requires: () => true,
+    effects: () => {},
+    tags: [],
+    weight: 1,
+    importance: [2, 3],
+    ...config
+});
+
+// Cast slot syntax: "kind" or "kind:filter". Filters are resolved in generator.js.
+const BEATS = [
+    // ---------------------------------------------------------------- genesis
+    beat({
+        id: "founding",
+        acts: ["genesis"],
+        cast: { A: "faction:alive", L: "place:unfounded" },
+        weight: 3,
+        importance: [3, 4],
+        tags: ["founding"],
+        title: (c) => `${c.A.name} founds ${c.L.name}`,
+        body: (c) =>
+            `${c.A.name} establishes a permanent holding at ${c.L.name}, ${c.pick([
+                "chosen for water and defensibility rather than beauty",
+                "against the advice of everyone who had been there",
+                "on ground nobody else had wanted",
+                "at the only crossing that stayed open year-round"
+            ])}. ${c.consequence()}`,
+        effects: (c) => {
+            c.setStatus(c.L, "settled");
+            c.claim(c.L, c.A);
+            c.flag(`founded:${c.L.id}`);
+        }
+    }),
+    beat({
+        id: "compact",
+        acts: ["genesis", "expansion"],
+        cast: { A: "faction:alive", B: "faction:alive" },
+        weight: 2,
+        tags: ["diplomacy"],
+        title: (c) => `The ${c.w("adjective")} Compact between ${c.A.name} and ${c.B.name}`,
+        body: (c) =>
+            `${c.A.name} and ${c.B.name} agree terms: ${c.pick([
+                "shared roads, shared debts, and no questions about the third clause",
+                "mutual defence, with the border left deliberately vague",
+                "trade at fixed rates for a generation",
+                "a division of territory that neither side reads the same way"
+            ])}. ${c.pick([
+                "It holds longer than anyone expects.",
+                "Both parties immediately begin preparing for its failure.",
+                "The document survives; the goodwill does not."
+            ])}`,
+        effects: (c) => c.setRelation(c.A, c.B, "allied")
+    }),
+    beat({
+        id: "firstRecord",
+        acts: ["genesis"],
+        cast: { A: "faction:alive", P: "person:alive" },
+        weight: 2,
+        importance: [1, 2],
+        tags: ["record"],
+        title: (c) => `First surviving mention of ${c.A.name}`,
+        body: (c) =>
+            `The name appears in ${c.pick([
+                "a tax roll",
+                "a shipping manifest",
+                "a letter of complaint",
+                "a list of debts owed",
+                "a burial inventory"
+            ])} kept by ${c.P.name}, ${c.P.epithet || "a minor official"}. ${c.pick([
+                "Everything earlier is inference.",
+                "The entry is a single line, and it is already an accusation.",
+                "Historians have argued about the spelling ever since."
+            ])}`
+    }),
+    beat({
+        id: "commission",
+        acts: ["genesis", "expansion"],
+        cast: { A: "faction:alive", R: "artifact:uncreated", P: "person:alive" },
+        weight: 2,
+        importance: [3, 4],
+        tags: ["artifact"],
+        title: (c) => `${c.A.name} commissions ${c.R.name}`,
+        body: (c) =>
+            `Built under ${c.P.name} ${c.pick([
+                "over eleven years and three budgets",
+                "in secret, and finished early",
+                "by hands that were not credited",
+                "to settle an argument that had already turned violent"
+            ])}. ${c.pick([
+                "Its stated purpose and its actual purpose differ.",
+                "It works. That turns out to be the problem.",
+                "Nobody records what it cost to run."
+            ])}`,
+        effects: (c) => {
+            c.setStatus(c.R, "held");
+            c.claim(c.R, c.A);
+            c.flag(`exists:${c.R.id}`);
+        }
+    }),
+    beat({
+        id: "omen",
+        acts: ["genesis", "tension", "crisis"],
+        cast: { L: "place" },
+        weight: 1,
+        importance: [1, 2],
+        tags: ["omen"],
+        title: (c) => `Strange season over ${c.L.name}`,
+        body: (c) =>
+            `${c.capitalize(c.w("omen"))}. ${c.pick([
+                "It is written down, filed, and ignored.",
+                "Three separate authorities issue three separate explanations.",
+                "In hindsight it is given far more weight than it deserved.",
+                "Nobody connects it to anything until much later."
+            ])}`
+    }),
+
+    // -------------------------------------------------------------- expansion
+    beat({
+        id: "claimLand",
+        acts: ["expansion"],
+        cast: { A: "faction:alive", L: "place:unclaimed" },
+        weight: 3,
+        tags: ["expansion"],
+        title: (c) => `${c.A.name} takes ${c.L.name}`,
+        body: (c) =>
+            `${c.pick([
+                "The claim is made on paper first and enforced afterwards",
+                "It costs less than expected and is therefore assumed to be a bargain",
+                "The previous occupants are described in the record as 'transient'",
+                "Three surveyors go out; one comes back with the map that gets used"
+            ])}. ${c.consequence()}`,
+        effects: (c) => {
+            c.claim(c.L, c.A);
+            c.setStatus(c.L, "settled");
+        }
+    }),
+    beat({
+        id: "rise",
+        acts: ["expansion", "tension"],
+        cast: { P: "person:alive", A: "faction:alive" },
+        weight: 3,
+        importance: [3, 4],
+        tags: ["power"],
+        title: (c) => `${c.P.name} takes control of ${c.A.name}`,
+        body: (c) =>
+            `${c.pick([
+                "The succession is clean enough to survive scrutiny",
+                "Two rivals withdraw within a month, one of them permanently",
+                "It is not a coup, but the distinction requires explaining",
+                "The vote is unanimous, which tells you something about the vote"
+            ])}. As ${c.P.epithet || "leader"}, ${c.pFirst(c.P)} ${c.pick([
+                "reorganizes everything that can be reorganized",
+                "begins paying off debts nobody knew existed",
+                "makes one promise publicly and a different one privately",
+                "moves the capital, which is more consequential than it sounds"
+            ])}.`,
+        effects: (c) => {
+            c.setLeader(c.A, c.P);
+            c.flag(`leads:${c.P.id}:${c.A.id}`);
+        }
+    }),
+    beat({
+        id: "discovery",
+        acts: ["expansion", "tension"],
+        cast: { P: "person:alive", R: "artifact:hidden" },
+        weight: 3,
+        importance: [3, 5],
+        tags: ["artifact", "discovery"],
+        title: (c) => `${c.P.name} ${c.w("discovery")} ${c.R.name}`,
+        body: (c) =>
+            `${c.pick([
+                "It has been sitting in plain sight for a long time",
+                "The find is accidental and the credit is not",
+                "Two other people made the same discovery first and were not believed",
+                "Recovering it takes a season; understanding it takes a generation"
+            ])}. ${c.pick([
+                "Word travels faster than the object does.",
+                "Its owners are notified last.",
+                "The first people to use it do not survive the experience.",
+                "It changes what everyone assumes is possible."
+            ])}`,
+        effects: (c) => {
+            c.setStatus(c.R, "held");
+            c.flag(`found:${c.R.id}`);
+            if (c.P.affiliation) c.claimById(c.R, c.P.affiliation);
+        }
+    }),
+    beat({
+        id: "innovation",
+        acts: ["expansion"],
+        cast: { A: "faction:alive", P: "person:alive" },
+        weight: 2,
+        importance: [2, 4],
+        tags: ["innovation"],
+        title: (c) => `${c.P.name} ${c.w("discovery")} a method that changes ${c.A.name}`,
+        body: (c) =>
+            `${c.pick([
+                "The technique is unglamorous and enormously profitable",
+                "It halves a cost that everyone had assumed was fixed",
+                "It is published, then regretted",
+                "Adoption takes nine years and then happens all at once"
+            ])}. ${c.consequence()}`,
+        effects: (c) => c.flag(`innovation:${c.A.id}`)
+    }),
+    beat({
+        id: "route",
+        acts: ["expansion"],
+        cast: { A: "faction:alive", L: "place:settled" },
+        weight: 2,
+        tags: ["trade"],
+        title: (c) => `The route to ${c.L.name} opens`,
+        body: (c) =>
+            `${c.A.name} ${c.pick([
+                "secures the crossing and immediately begins taxing it",
+                "underwrites the first regular traffic, at a loss, deliberately",
+                "wins the contract by outlasting two better-funded rivals"
+            ])}. ${c.pick([
+                "Within a decade nobody remembers the route not existing.",
+                "The tolls fund everything that comes after.",
+                "It also becomes the fastest way for bad news to travel."
+            ])}`,
+        effects: (c) => c.flag(`route:${c.L.id}`)
+    }),
+
+    // ---------------------------------------------------------------- tension
+    beat({
+        id: "rivalry",
+        acts: ["tension"],
+        cast: { A: "faction:alive", B: "faction:alive" },
+        weight: 4,
+        importance: [2, 4],
+        tags: ["rivalry"],
+        title: (c) => `${c.A.name} and ${c.B.name} fall out`,
+        body: (c) =>
+            `${c.pick([
+                "The stated cause is a boundary; the real cause is a shortfall",
+                "An insult is delivered in a setting where it cannot be walked back",
+                "One side audits the other and publishes the findings",
+                "A shared obligation is quietly not honoured"
+            ])}. ${c.pick([
+                "Envoys are recalled without ceremony.",
+                "Both sides begin arming, while insisting they are not.",
+                "The dispute is referred to arbitration and stays there for years."
+            ])}`,
+        effects: (c) => c.setRelation(c.A, c.B, "hostile")
+    }),
+    beat({
+        id: "betrayal",
+        acts: ["tension", "crisis"],
+        cast: { P: "person:alive", A: "faction:alive", B: "faction:alive" },
+        weight: 2,
+        importance: [3, 4],
+        tags: ["betrayal"],
+        title: (c) => `${c.P.name} changes sides`,
+        body: (c) =>
+            `${c.pFirst(c.P)} leaves ${c.A.name} for ${c.B.name}, taking ${c.pick([
+                "the maps",
+                "the ledgers",
+                "four hundred people and their loyalty",
+                "the only working copy",
+                "nothing but the knowledge, which is worse"
+            ])}. ${c.pick([
+                "The reasons given at the time are not the reasons.",
+                "It is treated as treason by one side and recruitment by the other.",
+                "Neither side ever fully trusts them again."
+            ])}`,
+        effects: (c) => {
+            c.P.affiliation = c.B.id;
+            c.setRelation(c.A, c.B, "hostile");
+            c.flag(`betrayal:${c.P.id}`);
+        }
+    }),
+    beat({
+        id: "schism",
+        acts: ["tension", "crisis"],
+        cast: { A: "faction:alive" },
+        weight: 2,
+        importance: [3, 5],
+        tags: ["schism"],
+        creates: "faction",
+        title: (c) => `${c.A.name} splits`,
+        body: (c) =>
+            `A faction within ${c.A.name} breaks away as ${c.created.name}, ${c.pick([
+                "over a question of doctrine that everyone privately admits is about money",
+                "after the succession is settled the wrong way",
+                "taking the southern holdings and most of the fleet",
+                "citing eleven grievances, of which two are real"
+            ])}. ${c.pick([
+                "The parent body calls it a rebellion and refuses the name.",
+                "Both halves claim the original charter.",
+                "The split is permanent, though it takes decades to be admitted."
+            ])}`,
+        effects: (c) => {
+            c.setRelation(c.A, c.created, "hostile");
+            c.flag(`schism:${c.A.id}`);
+        }
+    }),
+    beat({
+        id: "vanish",
+        acts: ["tension", "crisis"],
+        cast: { R: "artifact:held" },
+        weight: 2,
+        importance: [3, 4],
+        tags: ["artifact", "mystery"],
+        title: (c) => `${c.R.name} goes missing`,
+        body: (c) =>
+            `${c.pick([
+                "The loss is not reported for eight months",
+                "Three people are blamed and none of them did it",
+                "The inventory says it is still there; it is not",
+                "It leaves with someone who had every right to be in the room"
+            ])}. ${c.pick([
+                "Searches are conducted, then quietly discontinued.",
+                "A convincing forgery takes its place in the record.",
+                "It resurfaces later, in worse hands."
+            ])}`,
+        effects: (c) => {
+            c.setStatus(c.R, "hidden");
+            c.flag(`lost:${c.R.id}`);
+        }
+    }),
+    beat({
+        id: "warning",
+        acts: ["tension"],
+        cast: { P: "person:alive", F: "force" },
+        weight: 2,
+        importance: [2, 3],
+        tags: ["warning"],
+        title: (c) => `${c.P.name} warns about ${c.F.name}`,
+        body: (c) =>
+            `The argument is ${c.pick([
+                "correct in outline and wrong in every detail, which discredits it",
+                "circulated widely and acted on by nobody",
+                "suppressed, then leaked, then suppressed again",
+                "dismissed as self-interested, because it partly is"
+            ])}. ${c.pick([
+                "It will be quoted at length afterwards.",
+                "The warning is filed under the wrong heading and lost for years.",
+                "Two people take it seriously. Both survive what follows."
+            ])}`,
+        effects: (c) => {
+            c.setStatus(c.F, "rising");
+            c.flag(`warned:${c.F.id}`);
+        }
+    }),
+    beat({
+        id: "incident",
+        acts: ["tension"],
+        cast: { A: "faction:alive", B: "faction:hostileTo:A", L: "place" },
+        weight: 3,
+        importance: [2, 4],
+        tags: ["incident"],
+        title: (c) => `The incident at ${c.L.name}`,
+        body: (c) =>
+            `A ${c.pick(["patrol", "customs inspection", "supply convoy", "survey party"])} from ${
+                c.A.name
+            } meets one from ${c.B.name}. ${c.pick([
+                "Nineteen people die in under an hour.",
+                "Nobody is killed, which makes it harder to resolve.",
+                "Both sides file reports that cannot both be true.",
+                "The shooting stops, but the account of who started it never settles."
+            ])} ${c.consequence()}`,
+        effects: (c) => c.flag(`incident:${c.A.id}:${c.B.id}`)
+    }),
+
+    // ----------------------------------------------------------------- crisis
+    beat({
+        id: "warDeclared",
+        acts: ["crisis"],
+        cast: { A: "faction:alive", B: "faction:hostileTo:A" },
+        weight: 5,
+        importance: [4, 5],
+        tags: ["war"],
+        title: (c) => `${c.A.name} declares ${c.w("conflict")} on ${c.B.name}`,
+        body: (c) =>
+            `${c.pick([
+                "The declaration is a formality; the fighting started months earlier",
+                "It is framed as enforcement of an existing agreement",
+                "Both sides expect it to last one season"
+            ])}. ${c.pick([
+                "It lasts considerably longer than one season.",
+                "Neutral parties choose sides within weeks.",
+                "The first year is the only year anyone will later defend."
+            ])}`,
+        effects: (c) => {
+            c.setRelation(c.A, c.B, "war");
+            c.flag(`war:${c.A.id}:${c.B.id}`);
+        }
+    }),
+    beat({
+        id: "siege",
+        acts: ["crisis", "cataclysm"],
+        cast: { A: "faction:atWar", L: "place:settled" },
+        weight: 3,
+        importance: [3, 5],
+        tags: ["war", "siege"],
+        title: (c) => `The siege of ${c.L.name}`,
+        body: (c) =>
+            `${c.A.name} invests the place for ${c.pick([
+                "eleven months",
+                "two winters",
+                "forty days",
+                "longer than the war it belongs to"
+            ])}. ${c.pick([
+                "The walls hold. The wells do not.",
+                "It falls to negotiation rather than assault, which nobody finds satisfying.",
+                "Relief arrives four days after the surrender.",
+                "What is left standing is not worth the taking."
+            ])}`,
+        effects: (c) => {
+            c.setStatus(c.L, "besieged");
+            c.flag(`siege:${c.L.id}`);
+        }
+    }),
+    beat({
+        id: "assassination",
+        acts: ["crisis"],
+        cast: { P: "person:alive" },
+        weight: 3,
+        importance: [4, 5],
+        tags: ["death"],
+        title: (c) => `${c.P.name} is killed`,
+        body: (c) =>
+            `${c.pick([
+                "In a corridor, by someone with legitimate access",
+                "Publicly, and the crowd does not intervene",
+                "Quietly enough that the death is announced as illness",
+                "During a negotiation both sides had described as promising"
+            ])}. ${c.pick([
+                "Four separate parties claim responsibility; at most one is telling the truth.",
+                "The successor is in place within a day, which raises questions.",
+                "It ends a policy that had no other opponents.",
+                "The killing is avenged twice, on the wrong people."
+            ])}`,
+        effects: (c) => {
+            c.setStatus(c.P, "dead");
+            c.flag(`dead:${c.P.id}`);
+        }
+    }),
+    beat({
+        id: "forceAwakens",
+        acts: ["crisis", "cataclysm"],
+        cast: { F: "force", L: "place" },
+        weight: 3,
+        importance: [4, 5],
+        tags: ["force", "catastrophe"],
+        title: (c) => `${c.capitalize(c.F.name)} reaches ${c.L.name}`,
+        body: (c) =>
+            `${c.pick([
+                "It arrives faster than the models allowed for",
+                "The early cases are misdiagnosed as something ordinary",
+                "Containment is attempted and is worse than the thing contained",
+                "Nobody agrees on what it is, only on where it has been"
+            ])}. ${c.pick([
+                "Movement in and out is stopped, far too late.",
+                "The response consumes every reserve set aside for anything else.",
+                "Records from this period thin out sharply."
+            ])}`,
+        effects: (c) => {
+            c.setStatus(c.F, "active");
+            c.setStatus(c.L, "stricken");
+            c.flag(`unleashed:${c.F.id}`);
+        }
+    }),
+    beat({
+        id: "alliance",
+        acts: ["crisis"],
+        cast: { A: "faction:alive", B: "faction:alive" },
+        weight: 2,
+        importance: [3, 4],
+        tags: ["diplomacy"],
+        title: (c) => `${c.A.name} and ${c.B.name} make common cause`,
+        body: (c) =>
+            `Old enemies, ${c.pick([
+                "aligned by a threat that outranks their grievance",
+                "pushed together by everyone else refusing to help",
+                "united on paper and barely coordinated in practice"
+            ])}. ${c.pick([
+                "The alliance wins. It does not survive winning.",
+                "It is the most effective thing either of them ever does.",
+                "Each keeps a private accounting of what the other owes."
+            ])}`,
+        effects: (c) => c.setRelation(c.A, c.B, "allied")
+    }),
+    beat({
+        id: "contest",
+        acts: ["crisis", "cataclysm"],
+        cast: { R: "artifact:known", A: "faction:alive", B: "faction:alive" },
+        weight: 2,
+        importance: [3, 5],
+        tags: ["artifact", "war"],
+        title: (c) => `${c.A.name} and ${c.B.name} fight over ${c.R.name}`,
+        body: (c) =>
+            `${c.pick([
+                "Both claims are legitimate under different readings of the same document",
+                "It is worth more than the campaign fought for it, but only just",
+                "Neither side is willing to let the other have it, which is the whole argument"
+            ])}. ${c.pick([
+                "It changes hands three times in two years.",
+                "It is damaged in the taking and never fully works again.",
+                "The winner discovers it was never the important part."
+            ])}`,
+        effects: (c) => {
+            c.setRelation(c.A, c.B, "war");
+            c.claim(c.R, c.A);
+        }
+    }),
+
+    // -------------------------------------------------------------- cataclysm
+    beat({
+        id: "placeFalls",
+        acts: ["cataclysm"],
+        cast: { L: "place:settled", A: "faction:alive" },
+        weight: 4,
+        importance: [4, 5],
+        tags: ["catastrophe"],
+        title: (c) => `${c.L.name} ${c.w("ruin")}`,
+        body: (c) =>
+            `${c.pick([
+                "The evacuation is orderly for six hours and then is not",
+                "It is not destroyed so much as emptied",
+                "What burns is mostly the archive, which is the real loss",
+                "The population leaves over three years; the last families are never counted"
+            ])}. ${c.A.name} ${c.pick([
+                "is blamed, fairly.",
+                "is blamed, unfairly, and never recovers the reputation.",
+                "arrives to help and is remembered for arriving late.",
+                "records the event in two lines."
+            ])}`,
+        effects: (c) => {
+            c.setStatus(c.L, "ruined");
+            c.flag(`ruined:${c.L.id}`);
+        }
+    }),
+    beat({
+        id: "factionFalls",
+        acts: ["cataclysm"],
+        cast: { A: "faction:alive" },
+        weight: 3,
+        importance: [4, 5],
+        tags: ["collapse"],
+        title: (c) => `${c.A.name} ${c.w("collapse")}`,
+        body: (c) =>
+            `${c.pick([
+                "The end is administrative before it is physical: the payments stop, then everything else does",
+                "Its territory is absorbed by three neighbours within a decade",
+                "It survives on paper for another generation, which fools nobody",
+                "The final assembly is attended by fewer than a hundred people"
+            ])}. ${c.pick([
+                "Its archives are divided as spoils.",
+                "The name is kept as a brand by people who had nothing to do with it.",
+                "Debts outlive it by a century."
+            ])}`,
+        effects: (c) => {
+            c.setStatus(c.A, "fallen");
+            c.flag(`fallen:${c.A.id}`);
+        }
+    }),
+    beat({
+        id: "lastStand",
+        acts: ["cataclysm"],
+        cast: { P: "person:alive", L: "place" },
+        weight: 3,
+        importance: [4, 5],
+        tags: ["death", "war"],
+        title: (c) => `${c.P.name} holds ${c.L.name}`,
+        body: (c) =>
+            `${c.pFirst(c.P)} ${c.pick([
+                "refuses the withdrawal order and buys eleven days",
+                "gets four thousand people out and does not leave with them",
+                "holds a position of no strategic value, for reasons that are never explained",
+                "surrenders, having first destroyed everything worth surrendering"
+            ])}. ${c.pick([
+                "The account that survives was written by the other side.",
+                "It is the last thing anyone records about them.",
+                "The gesture is remembered better than the war it belonged to."
+            ])}`,
+        effects: (c) => {
+            c.setStatus(c.P, "dead");
+            c.flag(`dead:${c.P.id}`);
+        }
+    }),
+    beat({
+        id: "artifactSpent",
+        acts: ["cataclysm"],
+        cast: { R: "artifact:known" },
+        weight: 2,
+        importance: [4, 5],
+        tags: ["artifact", "catastrophe"],
+        title: (c) => `${c.R.name} is used, once`,
+        body: (c) =>
+            `${c.pick([
+                "It does exactly what it was built to do",
+                "The effect exceeds every estimate, including the pessimistic ones",
+                "It works, and is unusable afterwards",
+                "Whatever it was for, this was not it"
+            ])}. ${c.pick([
+                "The decision to use it is made by four people in under an hour.",
+                "Nobody who authorized it is willing to be named.",
+                "Its use ends the war and starts the argument."
+            ])}`,
+        effects: (c) => {
+            c.setStatus(c.R, "spent");
+            c.flag(`spent:${c.R.id}`);
+        }
+    }),
+
+    // -------------------------------------------------------------- aftermath
+    beat({
+        id: "treaty",
+        acts: ["aftermath"],
+        cast: { A: "faction:atWar", B: "faction:atWarWith:A" },
+        weight: 5,
+        importance: [3, 5],
+        tags: ["diplomacy", "peace"],
+        title: (c) => `${c.A.name} and ${c.B.name} come to terms`,
+        body: (c) =>
+            `Signed at ${c.pick(["a border post", "a neutral port", "the ruins of the thing they fought over", "a house belonging to neither"])}, ${c.pick([
+                "after both sides run out of anything to fight with",
+                "on terms nobody defends publicly",
+                "with the difficult clause deferred by twenty years"
+            ])}. ${c.pick([
+                "The deferred clause causes the next war.",
+                "It holds. That surprises the people who wrote it.",
+                "Both delegations describe it as a defeat, which is usually a good sign."
+            ])}`,
+        effects: (c) => {
+            c.setRelation(c.A, c.B, "wary");
+            c.flag(`peace:${c.A.id}:${c.B.id}`);
+        }
+    }),
+    beat({
+        id: "rebuild",
+        acts: ["aftermath"],
+        cast: { L: "place:ruined", A: "faction:alive" },
+        weight: 3,
+        tags: ["rebuild"],
+        title: (c) => `${c.L.name} is resettled`,
+        body: (c) =>
+            `${c.A.name} ${c.pick([
+                "funds the rebuilding and names it after itself",
+                "permits resettlement without funding it",
+                "rebuilds the walls first and the housing eventually"
+            ])}. ${c.pick([
+                "The new town sits beside the old one rather than on it.",
+                "Half the returning families are not the families that left.",
+                "The street plan is straighter, which everyone dislikes."
+            ])}`,
+        effects: (c) => {
+            c.setStatus(c.L, "settled");
+            c.claim(c.L, c.A);
+        }
+    }),
+    beat({
+        id: "tribunal",
+        acts: ["aftermath"],
+        cast: { A: "faction:alive", P: "person:alive" },
+        weight: 3,
+        importance: [3, 4],
+        tags: ["reckoning"],
+        title: (c) => `The inquiry into ${c.A.name}`,
+        body: (c) =>
+            `${c.P.name} chairs proceedings that ${c.pick([
+                "last two years and convict three clerks",
+                "establish the facts and assign none of the blame",
+                "are abandoned when the funding is withdrawn",
+                "produce a report that is sealed for fifty years"
+            ])}. ${c.pick([
+                "The sealed volume is the only one anyone wants.",
+                "Its findings become the standard account, correct or not.",
+                "Everyone senior enough to answer for it is already dead."
+            ])}`,
+        effects: (c) => c.flag(`inquiry:${c.A.id}`)
+    }),
+    beat({
+        id: "exodus",
+        acts: ["aftermath", "cataclysm"],
+        cast: { A: "faction:alive" },
+        weight: 2,
+        importance: [3, 4],
+        tags: ["migration"],
+        creates: "place",
+        title: (c) => `The move to ${c.created.name}`,
+        body: (c) =>
+            `People leaving ${c.A.name}'s territory settle ${c.created.name}, ${c.pick([
+                "which had been considered uninhabitable and was merely unpleasant",
+                "far enough out to be nobody's responsibility",
+                "on the strength of a single favourable survey"
+            ])}. ${c.pick([
+                "Within thirty years it is the larger settlement.",
+                "They take the grievance with them intact.",
+                "The first two winters kill a fifth of them."
+            ])}`,
+        effects: (c) => {
+            c.setStatus(c.created, "settled");
+            c.claim(c.created, c.A);
+        }
+    }),
+    beat({
+        id: "recovered",
+        acts: ["aftermath", "legacy"],
+        cast: { R: "artifact:hidden", P: "person:alive" },
+        weight: 2,
+        importance: [3, 4],
+        tags: ["artifact", "discovery"],
+        title: (c) => `${c.R.name} resurfaces`,
+        body: (c) =>
+            `Found by ${c.P.name} ${c.pick([
+                "in a lot of unrelated salvage",
+                "exactly where the earliest account said it would be",
+                "in the possession of someone who did not know what they had",
+                "during work on something else entirely"
+            ])}. ${c.pick([
+                "Authentication takes longer than the search did.",
+                "Three parties immediately claim ownership.",
+                "It is quietly returned to storage, and this time the location is written down."
+            ])}`,
+        effects: (c) => {
+            c.setStatus(c.R, "held");
+            c.flag(`found:${c.R.id}`);
+        }
+    }),
+
+    // ----------------------------------------------------------------- legacy
+    beat({
+        id: "myth",
+        acts: ["legacy"],
+        cast: { P: "person", L: "place" },
+        weight: 3,
+        importance: [2, 3],
+        tags: ["memory"],
+        title: (c) => `${c.P.name} becomes a story`,
+        body: (c) =>
+            `By now the version told at ${c.L.name} ${c.pick([
+                "has them present at three events they missed",
+                "has removed everyone else from the room",
+                "is shorter, better, and wrong",
+                "is used to settle arguments about property"
+            ])}. ${c.pick([
+                "The documentary record is thinner and much less popular.",
+                "Two towns claim the burial site.",
+                "Correcting it is considered bad manners."
+            ])}`,
+        effects: (c) => c.flag(`myth:${c.P.id}`)
+    }),
+    beat({
+        id: "successor",
+        acts: ["legacy"],
+        cast: { A: "faction:fallen" },
+        weight: 3,
+        importance: [3, 4],
+        creates: "faction",
+        tags: ["founding"],
+        title: (c) => `${c.created.name} claims the inheritance of ${c.A.name}`,
+        body: (c) =>
+            `${c.pick([
+                "The genealogy is constructed backwards from the conclusion",
+                "The claim rests on holding the archive rather than the bloodline",
+                "Two other bodies make the same claim and lose the argument"
+            ])}. ${c.pick([
+                "It is accepted because contesting it serves nobody.",
+                "The old symbols are revived with the awkward parts removed.",
+                "Within a generation the descent is treated as fact."
+            ])}`,
+        effects: (c) => c.flag(`successor:${c.A.id}`)
+    }),
+    beat({
+        id: "sealed",
+        acts: ["legacy"],
+        cast: { A: "faction:alive", R: "artifact:known" },
+        weight: 2,
+        importance: [2, 4],
+        tags: ["record"],
+        title: (c) => `${c.A.name} seals the record on ${c.R.name}`,
+        body: (c) =>
+            `${c.pick([
+                "Access is restricted for reasons the restriction order does not give",
+                "The catalogue entry remains; the object does not",
+                "It is moved somewhere secure and then, administratively, forgotten"
+            ])}. ${c.pick([
+                "Copies exist. Everyone involved knows this.",
+                "The seal outlasts the institution that applied it.",
+                "It is opened once, by accident, and closed again immediately."
+            ])}`,
+        effects: (c) => c.setStatus(c.R, "sealed")
+    }),
+    beat({
+        id: "recurrence",
+        acts: ["legacy"],
+        cast: { F: "force", L: "place:settled" },
+        weight: 2,
+        importance: [3, 5],
+        tags: ["force", "omen"],
+        title: (c) => `The first sign of ${c.F.name} returning`,
+        body: (c) =>
+            `At ${c.L.name}, ${c.pick([
+                "the same readings appear that preceded it last time",
+                "an old warning is rediscovered and immediately disputed",
+                "three unconnected people report the same thing in the same month"
+            ])}. ${c.pick([
+                "The record ends here, which is not the same as nothing happening.",
+                "The response is faster this time, and still not fast enough.",
+                "Nobody alive remembers the first occurrence directly."
+            ])}`,
+        effects: (c) => c.setStatus(c.F, "rising")
+    }),
+    beat({
+        id: "quietEnd",
+        acts: ["legacy"],
+        cast: { A: "faction:alive", P: "person:alive" },
+        weight: 2,
+        importance: [1, 3],
+        tags: ["record"],
+        title: (c) => `${c.P.name} closes the ledger`,
+        body: (c) =>
+            `The last entry made in ${c.A.name}'s own hand ${c.pick([
+                "concerns a shipment of grain",
+                "is a list of names with no explanation",
+                "is unfinished mid-sentence",
+                "records the weather and nothing else"
+            ])}. ${c.pick([
+                "Everything after this is reconstruction.",
+                "The next volume was begun, and has not been found.",
+                "It is the most quoted document of the period, mostly out of context."
+            ])}`
+    })
+];
+
+const BEATS_BY_ACT = BEATS.reduce((acc, b) => {
+    b.acts.forEach((act) => {
+        (acc[act] = acc[act] || []).push(b);
+    });
+    return acc;
+}, {});
+// ---- end beats.js ----
+
+
+// The generator. Walks a dramatic arc, picks beats whose preconditions the
+// current world state satisfies, binds a cast to them, and records both the
+// resulting event and the state change it caused.
+
+
+
+
+const ACT_TEMPO = {
+    genesis: 1.5,
+    expansion: 1.25,
+    tension: 0.9,
+    crisis: 0.6,
+    cataclysm: 0.45,
+    aftermath: 0.9,
+    legacy: 1.6
+};
+
+function getGenre(genreId) {
+    return GENRES[genreId] || GENRES.fantasy;
+}
+
+function formatTime(genre, value) {
+    const n = Math.round(value);
+    const pretty = Math.abs(n) >= 10000 ? n.toLocaleString("en-US") : String(n);
+    return genre.time.unit ? `${genre.time.unit} ${pretty}` : pretty;
+}
+
+// ---------------------------------------------------------------------------
+// World state, rebuilt by replaying an existing timeline's events.
+// ---------------------------------------------------------------------------
+
+function relationKey(a, b) {
+    return [a, b].sort().join("|");
+}
+
+function makeState(timeline) {
+    const state = {
+        entities: timeline.entities,
+        byId: new Map(timeline.entities.map((e) => [e.id, e])),
+        relations: new Map(),
+        owners: new Map(),
+        leaders: new Map(),
+        flags: new Map(),
+        lastEventByEntity: new Map(),
+        spotlight: [],
+        recentBeats: [],
+        beatUses: new Map(),
+        availableIds: null
+    };
+
+    state.get = (id) => state.byId.get(id);
+    state.relation = (a, b) => state.relations.get(relationKey(a.id, b.id)) || "neutral";
+    state.touch = (entity, eventId) => {
+        state.lastEventByEntity.set(entity.id, eventId);
+        state.spotlight = [entity.id, ...state.spotlight.filter((id) => id !== entity.id)].slice(0, 6);
+    };
+    return state;
+}
+
+/**
+ * Applies one event's declared effects to the state. Called both while
+ * generating and while replaying a saved timeline.
+ */
+function applyEffects(state, beatDef, cast, created, eventId) {
+    const api = {
+        ...cast,
+        created,
+        setStatus: (entity, status) => {
+            if (entity) entity.status = status;
+        },
+        setRelation: (a, b, value) => {
+            if (a && b) state.relations.set(relationKey(a.id, b.id), value);
+        },
+        claim: (thing, owner) => {
+            if (thing && owner) state.owners.set(thing.id, owner.id);
+        },
+        claimById: (thing, ownerId) => {
+            if (thing && ownerId) state.owners.set(thing.id, ownerId);
+        },
+        setLeader: (faction, person) => {
+            if (faction && person) state.leaders.set(faction.id, person.id);
+        },
+        flag: (key) => state.flags.set(key, eventId)
+    };
+    try {
+        beatDef.effects(api);
+    } catch (err) {
+        // A malformed hand-edited event should never take the whole app down.
+        console.warn("beat effects failed", beatDef.id, err);
+    }
+}
+
+function replayState(timeline) {
+    const state = makeState(timeline);
+    for (const event of timeline.events) {
+        if (!event.beatId || !event.cast) continue;
+        const beatDef = BEATS.find((b) => b.id === event.beatId);
+        if (!beatDef) continue;
+        const cast = {};
+        for (const [slot, entityId] of Object.entries(event.cast)) {
+            cast[slot] = state.get(entityId);
+        }
+        const created = event.createdEntityId ? state.get(event.createdEntityId) : null;
+        applyEffects(state, beatDef, cast, created, event.id);
+        Object.values(cast).forEach((entity) => entity && state.touch(entity, event.id));
+    }
+    return state;
+}
+
+// ---------------------------------------------------------------------------
+// Cast binding
+// ---------------------------------------------------------------------------
+
+function matchesFilter(entity, kind, filter, state, bound) {
+    if (!entity || entity.kind !== kind) return false;
+    if (!filter) return true;
+
+    const [name, ref] = filter.split(":");
+    const other = ref ? bound[ref] : null;
+
+    switch (name) {
+        case "alive":
+            return entity.status !== "fallen" && entity.status !== "dead";
+        case "dead":
+            return entity.status === "dead";
+        case "fallen":
+            return entity.status === "fallen";
+        case "atWar":
+            return Array.from(state.relations.entries()).some(
+                ([key, value]) => value === "war" && key.split("|").includes(entity.id)
+            );
+        case "atWarWith":
+            return Boolean(other) && state.relation(entity, other) === "war";
+        case "hostileTo":
+            return Boolean(other) && ["hostile", "war"].includes(state.relation(entity, other));
+        case "unfounded":
+            return entity.status === "unknown";
+        case "unclaimed":
+            return !state.owners.has(entity.id);
+        case "settled":
+            return ["settled", "besieged", "stricken"].includes(entity.status);
+        case "ruined":
+            return entity.status === "ruined";
+        case "uncreated":
+            return entity.status === "unknown";
+        case "hidden":
+            return entity.status === "hidden";
+        case "held":
+            return entity.status === "held";
+        case "known":
+            return entity.status !== "unknown";
+        default:
+            return true;
+    }
+}
+
+function bindCast(rng, beatDef, state) {
+    const bound = {};
+    const taken = new Set();
+
+    for (const [slot, spec] of Object.entries(beatDef.cast || {})) {
+        const [kind, ...rest] = spec.split(":");
+        const filter = rest.join(":");
+        const candidates = state.entities.filter(
+            (e) =>
+                !taken.has(e.id) &&
+                (!state.availableIds || state.availableIds.has(e.id)) &&
+                matchesFilter(e, kind, filter, state, bound)
+        );
+        if (!candidates.length) return null;
+
+        // Bias toward entities already in play so a history keeps its through-lines,
+        // but not so hard that the rest of the cast never appears.
+        const chosen = rng.pickWeighted(candidates, (e) => {
+            const spotlightIndex = state.spotlight.indexOf(e.id);
+            const recency = spotlightIndex === -1 ? 1 : 2.4 - spotlightIndex * 0.3;
+            const freshness = state.lastEventByEntity.has(e.id) ? 1 : 1.5;
+            return recency * freshness;
+        });
+        bound[slot] = chosen;
+        taken.add(chosen.id);
+    }
+    return bound;
+}
+
+// ---------------------------------------------------------------------------
+// Prose context
+// ---------------------------------------------------------------------------
+
+const CONSEQUENCES = [
+    "The consequences take a generation to become obvious.",
+    "It is recorded as routine and is not.",
+    "Two other parties immediately adjust their plans.",
+    "The cost is paid by people who are not named in the record.",
+    "Nobody objects loudly enough to be remembered for objecting.",
+    "It sets a precedent that is cited for two centuries, usually wrongly.",
+    "The decision is reversed later, at much greater expense.",
+    "Everyone involved considers it a minor administrative matter."
+];
+
+function makeContext(rng, genre, cast, created, motifs) {
+    const ctx = {
+        ...cast,
+        created,
+        pick: (list) => rng.pick(list),
+        w: (bank) => rng.pick(genre.words[bank] || genre.words.adjective),
+        capitalize: (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1),
+        pFirst: (person) => (person ? String(person.name).split(" ")[0] : "They"),
+        consequence: () => {
+            if (motifs.length && rng.chance(0.18)) {
+                const motif = rng.pick(motifs);
+                return rng.pick([
+                    `Later accounts trace this back to a question of ${motif}.`,
+                    `It is the first entry anyone files under "${motif}".`,
+                    `Arguments about ${motif} date from here.`
+                ]);
+            }
+            return rng.pick(CONSEQUENCES);
+        }
+    };
+    return ctx;
+}
+
+// ---------------------------------------------------------------------------
+// Era naming
+// ---------------------------------------------------------------------------
+
+function eraName(rng, genre, act, timeline) {
+    const places = (timeline.entities || []).filter((e) => e.kind === "place");
+    const place = places.length ? rng.pick(places).name : rng.pick(genre.words.placeKind);
+    return rng.pick(ERA_NAME_PATTERNS)
+        .replace("{adjective}", rng.pick(genre.words.adjective))
+        .replace("{noun}", rng.pick(ERA_NOUNS[act] || ERA_NOUNS.legacy))
+        .replace("{place}", place);
+}
+
+/**
+ * Entities that only exist because a later event invented them. Generating
+ * prehistory, or re-rolling an early event, must not reach forward for them.
+ */
+function idsBornAtOrAfter(timeline, index) {
+    const born = new Set();
+    timeline.events.slice(index).forEach((event) => {
+        if (event.createdEntityId) born.add(event.createdEntityId);
+    });
+    return born;
+}
+
+function restrictToKnownAt(state, timeline, index) {
+    const born = idsBornAtOrAfter(timeline, index);
+    state.availableIds = new Set(state.entities.filter((e) => !born.has(e.id)).map((e) => e.id));
+}
+
+// ---------------------------------------------------------------------------
+// Event generation
+// ---------------------------------------------------------------------------
+
+function generateEvent(rng, genre, state, timeline, act, time, era, options = {}) {
+    let shuffled = rng.shuffle((BEATS_BY_ACT[act] || []).slice());
+    if (options.preferTag) {
+        // Used to make a history open on a founding rather than a portent.
+        shuffled = shuffled
+            .filter((b) => b.tags.includes(options.preferTag))
+            .concat(shuffled.filter((b) => !b.tags.includes(options.preferTag)));
+    }
+
+    for (const beatDef of shuffled) {
+        // A beat that has already carried an event is a weaker candidate for the
+        // next one, and a much weaker one for the fifth.
+        const uses = state.beatUses.get(beatDef.id) || 0;
+        const recentPenalty = state.recentBeats.includes(beatDef.id) ? 0.1 : 1;
+        const usePenalty = 1 / (1 + uses * 1.1);
+        const odds = beatDef.weight * recentPenalty * usePenalty * (options.preferTag ? 1.6 : 0.62);
+        if (!rng.chance(Math.min(1, odds))) continue;
+
+        const cast = bindCast(rng, beatDef, state);
+        if (!cast) continue;
+        if (!beatDef.requires({ ...cast, state })) continue;
+
+        let created = null;
+        if (beatDef.creates) {
+            created = createEntity(rng, genre, state.namer, beatDef.creates);
+            state.entities.push(created);
+            state.byId.set(created.id, created);
+        }
+
+        const ctx = makeContext(rng, genre, cast, created, timeline.motifs || []);
+        let title;
+        let body;
+        try {
+            title = beatDef.title(ctx);
+            body = beatDef.body(ctx);
+        } catch (err) {
+            console.warn("beat text failed", beatDef.id, err);
+            continue;
+        }
+
+        const castIds = {};
+        Object.entries(cast).forEach(([slot, entity]) => {
+            castIds[slot] = entity.id;
+        });
+
+        const entityIds = Object.values(cast).map((e) => e.id);
+        if (created) entityIds.push(created.id);
+
+        const causes = Array.from(
+            new Set(entityIds.map((id) => state.lastEventByEntity.get(id)).filter(Boolean))
+        ).slice(0, 2);
+
+        const event = {
+            id: uid("evt"),
+            time,
+            timeLabel: formatTime(genre, time),
+            title,
+            body,
+            act,
+            era,
+            tags: beatDef.tags.slice(),
+            importance: rng.int(beatDef.importance[0], beatDef.importance[1]),
+            entityIds,
+            causes,
+            beatId: beatDef.id,
+            cast: castIds,
+            createdEntityId: created ? created.id : null,
+            source: "engine",
+            pinned: false
+        };
+
+        applyEffects(state, beatDef, cast, created, event.id);
+        Object.values(cast).forEach((entity) => state.touch(entity, event.id));
+        if (created) {
+            state.touch(created, event.id);
+            created.firstEventId = event.id;
+        }
+        entityIds.forEach((id) => {
+            const entity = state.get(id);
+            if (entity && !entity.firstEventId) entity.firstEventId = event.id;
+        });
+
+        state.beatUses.set(beatDef.id, (state.beatUses.get(beatDef.id) || 0) + 1);
+        state.recentBeats = [beatDef.id, ...state.recentBeats].slice(0, 5);
+        return event;
+    }
+    return null;
+}
+
+/**
+ * Distributes `count` events across the dramatic arc, starting from `startAct`.
+ * Later acts get proportionally more room, because that is where the
+ * consequences of everything earlier come due.
+ */
+function planActs(rng, count, startIndex = 0) {
+    const plan = [];
+    const acts = ACTS.slice(Math.max(0, Math.min(startIndex, ACTS.length - 1)));
+    const usable = acts.length ? acts : ACTS;
+    const weights = usable.map((a) => a.weightHint);
+    const total = weights.reduce((a, b) => a + b, 0);
+
+    usable.forEach((act, index) => {
+        const share = Math.max(1, Math.round((weights[index] / total) * count));
+        for (let i = 0; i < share; i += 1) plan.push(act.id);
+    });
+
+    // Trim or pad to exactly `count`, padding from the late acts.
+    while (plan.length > count) plan.pop();
+    while (plan.length < count) plan.push(usable[usable.length - 1].id);
+    return plan;
+}
+
+function attachNamer(state, rng, genre, timeline) {
+    const namer = makeNamer(rng, genre, { properNouns: [] });
+    timeline.entities.forEach((e) => namer.used.add(e.name.toLowerCase()));
+    state.namer = namer;
+    return state;
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+function createTimeline({ premise = "", genreId = "fantasy", seed, length = 14, scale = "medium" } = {}) {
+    const genre = getGenre(genreId);
+    const resolvedSeed = seed || `${genreId}-${Date.now().toString(36)}`;
+    const rng = makeRng(hashString(`${resolvedSeed}|${premise}`));
+
+    const world = buildWorld(rng, genre, premise, { scale });
+
+    const timeline = {
+        id: uid("tl"),
+        title: "",
+        premise,
+        genreId: genre.id,
+        seed: resolvedSeed,
+        scale,
+        motifs: world.seeds.motifs.slice(0, 8),
+        entities: world.entities,
+        events: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        branchOf: null
+    };
+
+    const state = makeState(timeline);
+    state.namer = world.namer;
+
+    let time = rng.int(genre.time.start[0], genre.time.start[1]);
+    const plan = planActs(rng, length);
+    let currentAct = null;
+    let currentEra = "";
+
+    for (const act of plan) {
+        if (act !== currentAct) {
+            currentAct = act;
+            currentEra = eraName(rng, genre, act, timeline);
+        }
+        const event = generateEvent(rng, genre, state, timeline, act, time, currentEra, {
+            preferTag: timeline.events.length === 0 ? "founding" : null
+        });
+        if (event) {
+            timeline.events.push(event);
+            time += Math.max(1, Math.round(rng.spread(genre.time.step[0], genre.time.step[1]) * ACT_TEMPO[act]));
+        } else {
+            time += rng.int(genre.time.step[0], genre.time.step[1]);
+        }
+    }
+
+    timeline.title = deriveTitle(rng, genre, timeline);
+    return timeline;
+}
+
+function deriveTitle(rng, genre, timeline) {
+    const factions = timeline.entities.filter((e) => e.kind === "faction");
+    const places = timeline.entities.filter((e) => e.kind === "place");
+    const anchor = rng.pick(factions.length ? factions : places);
+    const patterns = [
+        `A History of ${anchor ? anchor.name : "the Record"}`,
+        `The ${rng.pick(genre.words.adjective)} Record`,
+        `${anchor ? anchor.name : "The Record"}: A Chronicle`,
+        `Annals of the ${rng.pick(genre.words.adjective)} Age`
+    ];
+    return rng.pick(patterns);
+}
+
+/**
+ * Continues an existing timeline forward. Picks up the world exactly where the
+ * last event left it, so extensions inherit every war, death and grudge.
+ */
+function extendForward(timeline, count = 5) {
+    const genre = getGenre(timeline.genreId);
+    const rng = makeRng(hashString(`${timeline.seed}|forward|${timeline.events.length}|${Date.now()}`));
+    const state = replayState(timeline);
+    attachNamer(state, rng, genre, timeline);
+
+    const last = timeline.events[timeline.events.length - 1];
+    let time = last ? last.time : rng.int(genre.time.start[0], genre.time.start[1]);
+    const startActIndex = last ? Math.max(0, ACTS.findIndex((a) => a.id === last.act)) : 0;
+
+    // Continuing past the end of the arc loops back through the middle acts:
+    // fracture, crisis and aftermath repeat, which is what histories do.
+    const cycle = startActIndex >= ACTS.length - 1 ? ACTS.slice(2) : ACTS.slice(startActIndex);
+    const plan = planActs(rng, count, ACTS.indexOf(cycle[0]));
+
+    const added = [];
+    let currentAct = last ? last.act : null;
+    let currentEra = last ? last.era : "";
+
+    for (const act of plan) {
+        time += Math.max(1, Math.round(rng.spread(genre.time.step[0], genre.time.step[1]) * ACT_TEMPO[act]));
+        if (act !== currentAct) {
+            currentAct = act;
+            currentEra = eraName(rng, genre, act, timeline);
+        }
+        const event = generateEvent(rng, genre, state, timeline, act, time, currentEra);
+        if (event) {
+            timeline.events.push(event);
+            added.push(event);
+        }
+    }
+
+    timeline.entities = state.entities;
+    timeline.updatedAt = Date.now();
+    return added;
+}
+
+/**
+ * Generates deeper history *before* the current opening — the backstory that
+ * the existing first event implies.
+ */
+function extendBackward(timeline, count = 4) {
+    const genre = getGenre(timeline.genreId);
+    const rng = makeRng(hashString(`${timeline.seed}|back|${timeline.events.length}|${Date.now()}`));
+
+    // Prehistory is generated against a fresh world state: the point is what
+    // came before the record, so later flags must not constrain it.
+    const scratch = { ...timeline, events: [] };
+    const state = makeState(scratch);
+    state.entities = timeline.entities;
+    state.byId = new Map(timeline.entities.map((e) => [e.id, e]));
+    attachNamer(state, rng, genre, timeline);
+
+    const first = timeline.events[0];
+    const endTime = first ? first.time : rng.int(genre.time.start[0], genre.time.start[1]);
+    const rawSteps = [];
+    for (let i = 0; i < count; i += 1) {
+        rawSteps.push(Math.max(1, Math.round(rng.spread(genre.time.step[0], genre.time.step[1]) * 1.4)));
+    }
+    // Keep prehistory above zero: if the arc would run off the start of the
+    // calendar, compress the gaps rather than emitting negative years.
+    const totalBack = rawSteps.reduce((a, b) => a + b, 0);
+    const headroom = endTime - 1;
+    const squeeze = totalBack > headroom && headroom > count ? headroom / totalBack : 1;
+
+    const gaps = [];
+    let cursor = endTime;
+    for (let i = 0; i < count; i += 1) {
+        cursor -= Math.max(1, Math.round(rawSteps[i] * squeeze));
+        gaps.unshift(cursor);
+    }
+
+    restrictToKnownAt(state, timeline, 0);
+    const era = eraName(rng, genre, "genesis", timeline);
+    const added = [];
+    gaps.forEach((time, index) => {
+        const act = index < gaps.length - 1 ? "genesis" : "expansion";
+        const event = generateEvent(rng, genre, state, timeline, act, time, era, {
+            preferTag: index === 0 ? "founding" : null
+        });
+        if (event) added.push(event);
+    });
+
+    timeline.events = added.concat(timeline.events);
+    timeline.entities = state.entities;
+    timeline.updatedAt = Date.now();
+    return added;
+}
+
+/**
+ * Fills in the gap after a chosen event with smaller connecting events, for
+ * when a single line of the record deserves to be a chapter.
+ */
+function expandAfter(timeline, eventId, count = 3) {
+    const genre = getGenre(timeline.genreId);
+    const index = timeline.events.findIndex((e) => e.id === eventId);
+    if (index === -1) return [];
+
+    const rng = makeRng(hashString(`${timeline.seed}|expand|${eventId}|${Date.now()}`));
+    const anchor = timeline.events[index];
+    const next = timeline.events[index + 1];
+
+    // Replay only up to the anchor so inserted events see the world as it was.
+    const prefix = { ...timeline, events: timeline.events.slice(0, index + 1) };
+    const state = replayState(prefix);
+    state.entities = timeline.entities;
+    state.byId = new Map(timeline.entities.map((e) => [e.id, e]));
+    attachNamer(state, rng, genre, timeline);
+
+    restrictToKnownAt(state, timeline, index + 1);
+
+    const span = next ? next.time - anchor.time : genre.time.step[1] * count;
+    const step = Math.max(1, Math.floor(span / (count + 1)));
+
+    const added = [];
+    for (let i = 1; i <= count; i += 1) {
+        const time = anchor.time + step * i;
+        const event = generateEvent(rng, genre, state, timeline, anchor.act, time, anchor.era);
+        if (!event) continue;
+        event.importance = Math.max(1, anchor.importance - 1);
+        if (!event.causes.includes(anchor.id)) event.causes.unshift(anchor.id);
+        added.push(event);
+    }
+
+    timeline.events.splice(index + 1, 0, ...added);
+    timeline.entities = state.entities;
+    timeline.updatedAt = Date.now();
+    return added;
+}
+
+/**
+ * Forks an alternate history: keeps everything up to and including the chosen
+ * event, then re-rolls the future from a different seed.
+ */
+function branchFrom(timeline, eventId, count = 8) {
+    const index = timeline.events.findIndex((e) => e.id === eventId);
+    if (index === -1) return null;
+
+    const clone = JSON.parse(JSON.stringify(timeline));
+    clone.id = uid("tl");
+    clone.seed = `${timeline.seed}~${Math.random().toString(36).slice(2, 7)}`;
+    clone.events = clone.events.slice(0, index + 1);
+    clone.title = `${timeline.title} — Divergence`;
+    clone.branchOf = { timelineId: timeline.id, eventId, title: timeline.title };
+    clone.createdAt = Date.now();
+    clone.updatedAt = Date.now();
+
+    // Re-key ids so the branch and its parent can coexist in storage.
+    const idMap = new Map();
+    clone.entities.forEach((e) => {
+        const fresh = uid("ent");
+        idMap.set(e.id, fresh);
+        e.id = fresh;
+    });
+    clone.events.forEach((e) => {
+        const fresh = uid("evt");
+        idMap.set(e.id, fresh);
+        e.id = fresh;
+    });
+    clone.entities.forEach((e) => {
+        if (e.affiliation) e.affiliation = idMap.get(e.affiliation) || null;
+        if (e.firstEventId) e.firstEventId = idMap.get(e.firstEventId) || null;
+    });
+    clone.events.forEach((e) => {
+        e.entityIds = (e.entityIds || []).map((id) => idMap.get(id)).filter(Boolean);
+        e.causes = (e.causes || []).map((id) => idMap.get(id)).filter(Boolean);
+        if (e.cast) {
+            Object.keys(e.cast).forEach((slot) => {
+                e.cast[slot] = idMap.get(e.cast[slot]) || e.cast[slot];
+            });
+        }
+        if (e.createdEntityId) e.createdEntityId = idMap.get(e.createdEntityId) || null;
+    });
+    clone.branchOf.eventId = idMap.get(eventId) || null;
+
+    extendForward(clone, count);
+    return clone;
+}
+
+/** Re-rolls a single event in place, keeping its position in the record. */
+function rerollEvent(timeline, eventId) {
+    const genre = getGenre(timeline.genreId);
+    const index = timeline.events.findIndex((e) => e.id === eventId);
+    if (index === -1) return null;
+
+    const original = timeline.events[index];
+    const rng = makeRng(hashString(`${timeline.seed}|reroll|${eventId}|${Date.now()}`));
+    const prefix = { ...timeline, events: timeline.events.slice(0, index) };
+    const state = replayState(prefix);
+    state.entities = timeline.entities;
+    state.byId = new Map(timeline.entities.map((e) => [e.id, e]));
+    attachNamer(state, rng, genre, timeline);
+
+    restrictToKnownAt(state, timeline, index + 1);
+
+    const replacement = generateEvent(rng, genre, state, timeline, original.act, original.time, original.era);
+    if (!replacement) return null;
+
+    replacement.id = original.id;
+    replacement.timeLabel = original.timeLabel;
+    timeline.events[index] = replacement;
+    timeline.entities = state.entities;
+    timeline.updatedAt = Date.now();
+    return replacement;
+}
+
+function blankEvent(genre, time) {
+    return {
+        id: uid("evt"),
+        time,
+        timeLabel: formatTime(genre, time),
+        title: "New event",
+        body: "",
+        act: "expansion",
+        era: "",
+        tags: [],
+        importance: 3,
+        entityIds: [],
+        causes: [],
+        beatId: null,
+        cast: null,
+        createdEntityId: null,
+        source: "manual",
+        pinned: false
+    };
+}
+// ---- end generator.js ----
+
+
+// Application state: the open timeline, the saved library, and undo history.
+
+const LIBRARY_KEY = "timeline.creator.library.v1";
+const SETTINGS_KEY = "timeline.creator.settings.v1";
+const MAX_HISTORY = 50;
+
+function readJson(key, fallback) {
+    try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+    } catch (err) {
+        console.warn("could not read", key, err);
+        return fallback;
+    }
+}
+
+function writeJson(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+    } catch (err) {
+        console.warn("could not write", key, err);
+        return false;
+    }
+}
+
+function loadSettings() {
+    return {
+        aiMode: "engine",
+        apiKey: "",
+        model: "claude-sonnet-5",
+        ...readJson(SETTINGS_KEY, {})
+    };
+}
+
+function saveSettings(settings) {
+    writeJson(SETTINGS_KEY, settings);
+}
+
+function createStore() {
+    const listeners = new Set();
+    const state = {
+        timeline: null,
+        library: readJson(LIBRARY_KEY, []),
+        settings: loadSettings(),
+        selectedEventId: null,
+        filter: { text: "", tag: "", entityId: "", minImportance: 1 },
+        busy: null
+    };
+
+    let past = [];
+    let future = [];
+
+    function snapshot() {
+        return state.timeline ? JSON.stringify(state.timeline) : null;
+    }
+
+    function notify() {
+        listeners.forEach((fn) => fn(state));
+    }
+
+    const store = {
+        state,
+        subscribe(fn) {
+            listeners.add(fn);
+            return () => listeners.delete(fn);
+        },
+        notify,
+
+        /** Wraps a mutation so it becomes a single undoable step. */
+        commit(label, mutate) {
+            const before = snapshot();
+            const result = mutate(state.timeline);
+            if (before !== null) {
+                past.push({ label, json: before });
+                if (past.length > MAX_HISTORY) past.shift();
+            }
+            future = [];
+            if (state.timeline) state.timeline.updatedAt = Date.now();
+            store.persist();
+            notify();
+            return result;
+        },
+
+        /** Replaces the open timeline wholesale (new generation, import, branch). */
+        open(timeline, { undoable = true } = {}) {
+            const before = snapshot();
+            if (undoable && before !== null) {
+                past.push({ label: "open timeline", json: before });
+            }
+            future = [];
+            state.timeline = timeline;
+            state.selectedEventId = null;
+            store.persist();
+            notify();
+        },
+
+        canUndo: () => past.length > 0,
+        canRedo: () => future.length > 0,
+        undoLabel: () => (past.length ? past[past.length - 1].label : ""),
+
+        undo() {
+            if (!past.length) return;
+            const entry = past.pop();
+            future.push({ label: entry.label, json: snapshot() });
+            state.timeline = JSON.parse(entry.json);
+            store.persist();
+            notify();
+        },
+
+        redo() {
+            if (!future.length) return;
+            const entry = future.pop();
+            past.push({ label: entry.label, json: snapshot() });
+            state.timeline = JSON.parse(entry.json);
+            store.persist();
+            notify();
+        },
+
+        setBusy(message) {
+            state.busy = message;
+            notify();
+        },
+
+        select(eventId) {
+            state.selectedEventId = eventId;
+            notify();
+        },
+
+        setFilter(patch) {
+            Object.assign(state.filter, patch);
+            notify();
+        },
+
+        updateSettings(patch) {
+            Object.assign(state.settings, patch);
+            saveSettings(state.settings);
+            notify();
+        },
+
+        /** Saves the open timeline into the library, replacing any earlier copy. */
+        persist() {
+            if (!state.timeline) return;
+            const entry = {
+                id: state.timeline.id,
+                title: state.timeline.title,
+                genreId: state.timeline.genreId,
+                updatedAt: state.timeline.updatedAt || Date.now(),
+                eventCount: state.timeline.events.length,
+                data: state.timeline
+            };
+            const index = state.library.findIndex((t) => t.id === entry.id);
+            if (index === -1) state.library.unshift(entry);
+            else state.library[index] = entry;
+            state.library = state.library.slice(0, 40);
+            writeJson(LIBRARY_KEY, state.library);
+        },
+
+        loadFromLibrary(id) {
+            const entry = state.library.find((t) => t.id === id);
+            if (!entry) return false;
+            store.open(JSON.parse(JSON.stringify(entry.data)));
+            return true;
+        },
+
+        removeFromLibrary(id) {
+            state.library = state.library.filter((t) => t.id !== id);
+            writeJson(LIBRARY_KEY, state.library);
+            notify();
+        }
+    };
+
+    return store;
+}
+// ---- end store.js ----
+
+
+// Optional model-backed generation.
+//
+// Two backends, same output contract as the built-in engine:
+//   * `runtime`  — the page is running somewhere that exposes window.claude
+//   * `apiKey`   — the user supplied an Anthropic API key, called direct from
+//                  the browser
+// When neither is available the app falls back to the local engine, which is
+// why the whole thing still works offline.
+
+
+function detectBackends() {
+    const runtime =
+        typeof window !== "undefined" &&
+        window.claude &&
+        typeof window.claude.complete === "function";
+    return { runtime: Boolean(runtime) };
+}
+
+const SYSTEM_PROMPT = `You write fictional historical records. You are given a world (its factions, figures, places, artifacts and forces) and the events recorded so far.
+
+Rules:
+- Invent nothing outside the fiction. This is a made-up history; never present it as real.
+- Reuse the existing cast wherever possible. Introduce a new name only when the event genuinely needs one.
+- Every event must be a consequence of something already in the record, or set up something later.
+- Write like a historian, not a blurb: concrete, specific, understated. Two or three sentences of body text.
+- Vary scale. Not every event is a war; treaties, ledgers, bad harvests and quiet retirements carry a history too.
+- Times must increase monotonically and stay in the same calendar as the existing events.
+
+Reply with JSON only, no prose around it, in exactly this shape:
+{"events":[{"time":812,"timeLabel":"Year 812","title":"...","body":"...","era":"...","tags":["war"],"importance":4,"cast":[{"name":"...","kind":"faction"}]}]}
+
+"kind" is one of: faction, person, place, artifact, force. "importance" is 1-5.`;
+
+function describeWorld(timeline) {
+    const genre = getGenre(timeline.genreId);
+    const byKind = {};
+    timeline.entities.forEach((e) => {
+        (byKind[e.kind] = byKind[e.kind] || []).push(
+            `${e.name}${e.epithet ? ` (${e.epithet})` : ""}${e.status && e.status !== "active" ? ` [${e.status}]` : ""}`
+        );
+    });
+    const cast = Object.entries(byKind)
+        .map(([kind, names]) => `${kind}: ${names.join("; ")}`)
+        .join("\n");
+
+    return `Genre: ${genre.label} — ${genre.blurb}
+Premise: ${timeline.premise || "(none given)"}
+Calendar: events are labelled like "${formatTime(genre, 500)}".
+
+Cast:
+${cast}`;
+}
+
+function describeEvents(events, limit = 18) {
+    const slice = events.slice(-limit);
+    if (!slice.length) return "(the record is empty)";
+    return slice
+        .map((e) => `${e.timeLabel} — ${e.title}\n    ${e.body}`)
+        .join("\n");
+}
+
+function buildPrompt({ timeline, mode, count, instruction, anchor, nextEvent }) {
+    const world = describeWorld(timeline);
+    const record = describeEvents(timeline.events);
+    const steer = instruction ? `\n\nThe user asks specifically for: ${instruction}` : "";
+
+    if (mode === "create") {
+        return `${world}
+
+Write the opening ${count} events of this history, beginning with a founding or first contact and building toward a first source of tension.${steer}`;
+    }
+    if (mode === "expand") {
+        return `${world}
+
+The record so far:
+${record}
+
+Write ${count} smaller connecting events that happen strictly between these two:
+  A: ${anchor.timeLabel} — ${anchor.title}
+  B: ${nextEvent ? `${nextEvent.timeLabel} — ${nextEvent.title}` : "(the end of the record)"}
+They must fall between those times, be lower in importance than A, and explain how A led to B.${steer}`;
+    }
+    if (mode === "backward") {
+        const first = timeline.events[0];
+        return `${world}
+
+The record currently opens with:
+${first ? `${first.timeLabel} — ${first.title}\n    ${first.body}` : "(nothing)"}
+
+Write ${count} earlier events that lead up to that opening. They must be dated before ${
+            first ? first.timeLabel : "the record"
+        } and must make that opening feel inevitable.${steer}`;
+    }
+    return `${world}
+
+The record so far:
+${record}
+
+Continue the history with ${count} further events, picking up every unresolved thread — wars still running, artifacts still missing, grudges still owed.${steer}`;
+}
+
+function extractJson(text) {
+    const trimmed = String(text || "").trim();
+    const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+    const candidate = fenced ? fenced[1] : trimmed;
+    const start = candidate.indexOf("{");
+    const end = candidate.lastIndexOf("}");
+    if (start === -1 || end === -1) throw new Error("The model did not return JSON.");
+    return JSON.parse(candidate.slice(start, end + 1));
+}
+
+async function callRuntime(prompt) {
+    const reply = await window.claude.complete(`${SYSTEM_PROMPT}\n\n${prompt}`);
+    return extractJson(reply);
+}
+
+async function callApi(prompt, { apiKey, model }) {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+            "content-type": "application/json",
+            "x-api-key": apiKey,
+            "anthropic-version": "2023-06-01",
+            "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+            model: model || "claude-sonnet-5",
+            max_tokens: 4000,
+            system: SYSTEM_PROMPT,
+            messages: [{ role: "user", content: prompt }]
+        })
+    });
+
+    if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(`Anthropic API ${response.status}: ${detail.slice(0, 240)}`);
+    }
+    const payload = await response.json();
+    const text = (payload.content || []).map((block) => block.text || "").join("");
+    return extractJson(text);
+}
+
+/**
+ * Turns the model's loose output into events the editor understands, creating
+ * any entity it named that the world does not already have.
+ */
+function reconcile(timeline, rawEvents, { era = "", act = "expansion" } = {}) {
+    const genre = getGenre(timeline.genreId);
+    const byName = new Map(timeline.entities.map((e) => [e.name.toLowerCase(), e]));
+    const events = [];
+
+    (rawEvents || []).forEach((raw) => {
+        if (!raw || !raw.title) return;
+
+        const entityIds = [];
+        (raw.cast || []).forEach((member) => {
+            const name = String(member && member.name ? member.name : member || "").trim();
+            if (!name) return;
+            let entity = byName.get(name.toLowerCase());
+            if (!entity) {
+                const kind = ["faction", "person", "place", "artifact", "force"].includes(member.kind)
+                    ? member.kind
+                    : "person";
+                entity = {
+                    id: uid("ent"),
+                    kind,
+                    name,
+                    epithet: "",
+                    status: "active",
+                    note: "Introduced by the model.",
+                    firstEventId: null
+                };
+                timeline.entities.push(entity);
+                byName.set(name.toLowerCase(), entity);
+            }
+            entityIds.push(entity.id);
+        });
+
+        const time = Number.isFinite(Number(raw.time)) ? Number(raw.time) : null;
+        events.push({
+            id: uid("evt"),
+            time,
+            timeLabel: raw.timeLabel || (time === null ? "" : formatTime(genre, time)),
+            title: String(raw.title).trim(),
+            body: String(raw.body || "").trim(),
+            act: raw.act || act,
+            era: raw.era || era,
+            tags: Array.isArray(raw.tags) ? raw.tags.map(String).slice(0, 5) : [],
+            importance: Math.min(5, Math.max(1, Number(raw.importance) || 3)),
+            entityIds,
+            causes: [],
+            beatId: null,
+            cast: null,
+            createdEntityId: null,
+            source: "model",
+            pinned: false
+        });
+    });
+
+    return events;
+}
+
+/**
+ * Runs a generation through whichever backend the user selected. Throws with a
+ * readable message so the UI can offer to fall back to the local engine.
+ */
+async function generateWithModel(options) {
+    const { settings } = options;
+    const prompt = buildPrompt(options);
+    const backends = detectBackends();
+
+    if (settings.aiMode === "runtime") {
+        if (!backends.runtime) throw new Error("This page has no Claude runtime available.");
+        return callRuntime(prompt);
+    }
+    if (settings.aiMode === "api") {
+        if (!settings.apiKey) throw new Error("Add an Anthropic API key in Settings first.");
+        return callApi(prompt, settings);
+    }
+    throw new Error("Model generation is switched off.");
+}
+// ---- end ai.js ----
+
+
+// Wiring: renders the timeline, and routes every edit and generation request
+// through the store so undo always works.
+
+
+
+
+
+
+const store = createStore();
+let editingId = null;
+
+const $ = (id) => document.getElementById(id);
+const els = {
+    title: $("timelineTitle"),
+    meta: $("timelineMeta"),
+    undo: $("undoBtn"),
+    redo: $("redoBtn"),
+    exportBtn: $("exportBtn"),
+    importBtn: $("importBtn"),
+    importInput: $("importInput"),
+    premise: $("premiseInput"),
+    genre: $("genreSelect"),
+    genreBlurb: $("genreBlurb"),
+    length: $("lengthInput"),
+    scale: $("scaleSelect"),
+    seed: $("seedInput"),
+    generate: $("generateBtn"),
+    surprise: $("surpriseBtn"),
+    aiMode: $("aiModeSelect"),
+    apiFields: $("apiFields"),
+    apiKey: $("apiKeyInput"),
+    model: $("modelSelect"),
+    steer: $("steerInput"),
+    aiStatus: $("aiStatus"),
+    search: $("searchInput"),
+    tagFilter: $("tagFilter"),
+    importanceFilter: $("importanceFilter"),
+    clearFilter: $("clearFilterBtn"),
+    codex: $("codexList"),
+    codexCount: $("codexCount"),
+    library: $("libraryList"),
+    libraryCount: $("libraryCount"),
+    extendBack: $("extendBackBtn"),
+    extendFwd: $("extendFwdBtn"),
+    extendCount: $("extendCount"),
+    addEvent: $("addEventBtn"),
+    branchNotice: $("branchNotice"),
+    busy: $("busyBar"),
+    view: $("timelineView"),
+    empty: $("emptyState"),
+    toast: $("toast")
+};
+
+// ---------------------------------------------------------------- utilities
+
+function el(tag, props = {}, children = []) {
+    const node = document.createElement(tag);
+    Object.entries(props).forEach(([key, value]) => {
+        if (key === "class") node.className = value;
+        else if (key === "text") node.textContent = value;
+        else if (key === "html") node.innerHTML = value;
+        else if (key.startsWith("on")) node.addEventListener(key.slice(2).toLowerCase(), value);
+        else if (value !== null && value !== false && value !== undefined) node.setAttribute(key, value);
+    });
+    (Array.isArray(children) ? children : [children]).filter(Boolean).forEach((child) => node.appendChild(child));
+    return node;
+}
+
+let toastTimer = null;
+function toast(message, isError = false) {
+    els.toast.textContent = message;
+    els.toast.classList.toggle("error", Boolean(isError));
+    els.toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+        els.toast.hidden = true;
+    }, isError ? 7000 : 3200);
+}
+
+function eraColor(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i += 1) hash = (hash * 31 + name.charCodeAt(i)) % 360;
+    return `hsl(${hash}, 48%, 66%)`;
+}
+
+/** Pulls a number out of a hand-edited time label so ordering still means something. */
+function parseTimeLabel(label, fallback) {
+    const match = String(label).replace(/,/g, "").match(/-?\d+/);
+    return match ? Number(match[0]) : fallback;
+}
+
+function download(filename, content, type = "application/json") {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const anchor = el("a", { href: url, download: filename });
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function toMarkdown(timeline) {
+    const genre = getGenre(timeline.genreId);
+    const lines = [`# ${timeline.title || "Untitled chronicle"}`, ""];
+    if (timeline.premise) lines.push(`*${timeline.premise}*`, "");
+    lines.push(`**Genre:** ${genre.label}  |  **Seed:** \`${timeline.seed}\`  |  **Events:** ${timeline.events.length}`, "");
+
+    let era = null;
+    timeline.events.forEach((event) => {
+        if (event.era && event.era !== era) {
+            era = event.era;
+            lines.push("", `## ${era}`, "");
+        }
+        lines.push(`### ${event.timeLabel} — ${event.title}`);
+        if (event.body) lines.push("", event.body);
+        if (event.tags.length) lines.push("", `\`${event.tags.join("` `")}\``);
+        lines.push("");
+    });
+
+    lines.push("", "## Codex", "");
+    Object.keys(ENTITY_KINDS).forEach((kind) => {
+        const group = timeline.entities.filter((e) => e.kind === kind);
+        if (!group.length) return;
+        lines.push(`**${ENTITY_KINDS[kind].label}**`, "");
+        group.forEach((e) => lines.push(`- **${e.name}**${e.epithet ? ` — ${e.epithet}` : ""} *(${e.status})*`));
+        lines.push("");
+    });
+    return lines.join("\n");
+}
+
+// ------------------------------------------------------------------ filtering
+
+function visibleEvents(timeline) {
+    const { text, tag, entityId, minImportance } = store.state.filter;
+    const needle = text.trim().toLowerCase();
+    return timeline.events.filter((event) => {
+        if (minImportance > 1 && event.importance < minImportance) return false;
+        if (tag && !event.tags.includes(tag)) return false;
+        if (entityId && !(event.entityIds || []).includes(entityId)) return false;
+        if (needle) {
+            const haystack = `${event.title} ${event.body} ${event.tags.join(" ")}`.toLowerCase();
+            if (!haystack.includes(needle)) return false;
+        }
+        return true;
+    });
+}
+
+// ------------------------------------------------------------------ rendering
+
+function renderMeta() {
+    const timeline = store.state.timeline;
+    els.undo.disabled = !store.canUndo();
+    els.redo.disabled = !store.canRedo();
+    els.undo.title = store.canUndo() ? `Undo: ${store.undoLabel()}` : "Nothing to undo";
+
+    const hasTimeline = Boolean(timeline);
+    [els.extendBack, els.extendFwd, els.addEvent, els.exportBtn].forEach((b) => {
+        b.disabled = !hasTimeline;
+    });
+    els.empty.hidden = hasTimeline;
+
+    if (!hasTimeline) {
+        els.title.value = "";
+        els.meta.textContent = "No timeline yet — generate one to begin.";
+        els.branchNotice.hidden = true;
+        return;
+    }
+
+    if (document.activeElement !== els.title) els.title.value = timeline.title || "";
+    const genre = getGenre(timeline.genreId);
+    const span = timeline.events.length
+        ? `${timeline.events[0].timeLabel} → ${timeline.events[timeline.events.length - 1].timeLabel}`
+        : "empty";
+    els.meta.textContent = `${genre.label} · ${timeline.events.length} events · ${span} · seed ${timeline.seed}`;
+
+    if (timeline.branchOf) {
+        els.branchNotice.hidden = false;
+        els.branchNotice.textContent = `Alternate history — diverges from "${timeline.branchOf.title}" at the marked event.`;
+    } else {
+        els.branchNotice.hidden = true;
+    }
+}
+
+function renderEventCard(event, index, timeline) {
+    const isSelected = store.state.selectedEventId === event.id;
+    const isEditing = editingId === event.id;
+
+    const timeInput = el("input", {
+        type: "text",
+        value: event.timeLabel,
+        "aria-label": "Event date"
+    });
+    timeInput.addEventListener("change", () => {
+        const label = timeInput.value.trim();
+        store.commit("edit date", () => {
+            event.timeLabel = label;
+            event.time = parseTimeLabel(label, event.time);
+        });
+    });
+
+    const actions = el("div", { class: "event-actions" }, [
+        el("span", { class: "drag-handle", title: "Drag to reorder", text: "⠿" }),
+        el("button", { class: "btn tiny ghost", "data-action": "edit", "data-id": event.id, text: isEditing ? "Done" : "Edit" }),
+        el("button", { class: "btn tiny ghost", "data-action": "expand", "data-id": event.id, title: "Generate connecting events after this one", text: "Expand" }),
+        el("button", { class: "btn tiny ghost", "data-action": "reroll", "data-id": event.id, title: "Rewrite this event with the engine", text: "Re-roll" }),
+        el("button", { class: "btn tiny ghost", "data-action": "branch", "data-id": event.id, title: "Fork an alternate history from here", text: "Branch" }),
+        el("button", { class: "btn tiny ghost danger", "data-action": "delete", "data-id": event.id, text: "✕" })
+    ]);
+
+    const meta = el("div", { class: "event-meta" });
+    meta.appendChild(
+        el("button", {
+            class: `chip ${event.pinned ? "pinned" : ""}`,
+            "data-action": "pin",
+            "data-id": event.id,
+            title: "Pin so re-rolls and regenerations leave it alone",
+            text: event.pinned ? "★ pinned" : "☆ pin"
+        })
+    );
+    meta.appendChild(el("span", { class: "chip source", text: `weight ${event.importance}` }));
+    event.tags.forEach((tag) =>
+        meta.appendChild(el("button", { class: "chip", "data-action": "filter-tag", "data-tag": tag, text: tag }))
+    );
+    (event.entityIds || []).forEach((id) => {
+        const entity = timeline.entities.find((e) => e.id === id);
+        if (!entity) return;
+        meta.appendChild(
+            el("button", {
+                class: "chip entity",
+                "data-action": "filter-entity",
+                "data-entity": id,
+                text: `${entityIcon(entity.kind)} ${entity.name}`
+            })
+        );
+    });
+    (event.causes || []).forEach((causeId) => {
+        const cause = timeline.events.find((e) => e.id === causeId);
+        if (!cause) return;
+        meta.appendChild(
+            el("button", {
+                class: "chip cause",
+                "data-action": "goto",
+                "data-id": causeId,
+                title: cause.title,
+                text: `⤴ ${cause.timeLabel}`
+            })
+        );
+    });
+    if (event.source === "model") meta.appendChild(el("span", { class: "chip source", text: "claude" }));
+    if (event.source === "manual") meta.appendChild(el("span", { class: "chip source", text: "yours" }));
+
+    const card = el("div", { class: "event-card" }, [
+        el("div", { class: "event-head" }, [
+            el("h3", { class: "event-title", text: event.title }),
+            actions
+        ]),
+        event.body ? el("p", { class: "event-body", text: event.body }) : null,
+        meta
+    ]);
+
+    if (isEditing) card.appendChild(renderEditor(event, timeline));
+
+    const row = el("article", {
+        class: `event ${isSelected ? "selected" : ""}`,
+        "data-weight": String(event.importance),
+        "data-id": event.id,
+        "data-index": String(index),
+        draggable: "true"
+    }, [
+        el("div", { class: "event-time" }, [timeInput]),
+        card
+    ]);
+
+    return row;
+}
+
+function renderEditor(event, timeline) {
+    const titleInput = el("input", { type: "text", value: event.title });
+    const bodyInput = el("textarea", { rows: "4" });
+    bodyInput.value = event.body;
+    const eraInput = el("input", { type: "text", value: event.era || "", placeholder: "era name" });
+    const tagsInput = el("input", { type: "text", class: "tag-input", value: event.tags.join(", "), placeholder: "war, treaty" });
+    const importanceInput = el("select");
+    [1, 2, 3, 4, 5].forEach((n) => {
+        const option = el("option", { value: String(n), text: `${n}${n === 5 ? " — turning point" : n === 1 ? " — footnote" : ""}` });
+        if (n === event.importance) option.setAttribute("selected", "selected");
+        importanceInput.appendChild(option);
+    });
+    importanceInput.value = String(event.importance);
+
+    const picker = el("div", { class: "entity-picker" });
+    const chosen = new Set(event.entityIds || []);
+    timeline.entities.forEach((entity) => {
+        const toggle = el("button", {
+            type: "button",
+            class: `entity-toggle ${chosen.has(entity.id) ? "on" : ""}`,
+            text: `${entityIcon(entity.kind)} ${entity.name}`
+        });
+        toggle.addEventListener("click", () => {
+            if (chosen.has(entity.id)) chosen.delete(entity.id);
+            else chosen.add(entity.id);
+            toggle.classList.toggle("on", chosen.has(entity.id));
+        });
+        picker.appendChild(toggle);
+    });
+
+    const save = el("button", { class: "btn primary tiny", text: "Save changes" });
+    save.addEventListener("click", () => {
+        store.commit("edit event", () => {
+            event.title = titleInput.value.trim() || "Untitled event";
+            event.body = bodyInput.value.trim();
+            event.era = eraInput.value.trim();
+            event.tags = tagsInput.value.split(",").map((t) => t.trim()).filter(Boolean).slice(0, 6);
+            event.importance = Number(importanceInput.value);
+            event.entityIds = Array.from(chosen);
+            if (event.source === "engine") event.source = "edited";
+        });
+        editingId = null;
+        store.notify();
+    });
+
+    const cancel = el("button", { class: "btn ghost tiny", text: "Cancel" });
+    cancel.addEventListener("click", () => {
+        editingId = null;
+        store.notify();
+    });
+
+    return el("div", { class: "event-editor" }, [
+        el("label", { class: "field" }, [el("span", { text: "Title" }), titleInput]),
+        el("label", { class: "field" }, [el("span", { text: "Account" }), bodyInput]),
+        el("div", { class: "field-row" }, [
+            el("label", { class: "field" }, [el("span", { text: "Era" }), eraInput]),
+            el("label", { class: "field" }, [el("span", { text: "Tags" }), tagsInput]),
+            el("label", { class: "field narrow" }, [el("span", { text: "Weight" }), importanceInput])
+        ]),
+        el("div", { class: "field" }, [el("span", { text: "Involves" }), picker]),
+        el("div", { class: "editor-actions" }, [cancel, save])
+    ]);
+}
+
+function renderTimeline() {
+    const timeline = store.state.timeline;
+    els.view.replaceChildren();
+    if (!timeline) return;
+
+    const shown = visibleEvents(timeline);
+    if (!shown.length) {
+        els.view.appendChild(
+            el("div", { class: "empty" }, [
+                el("h2", { text: timeline.events.length ? "No events match the filter" : "This chronicle is empty" }),
+                el("p", {
+                    text: timeline.events.length
+                        ? "Clear the filters on the left to see the rest of the record."
+                        : "Use “Continue forward” to have the engine write the first events."
+                })
+            ])
+        );
+        return;
+    }
+
+    let currentEra = null;
+    let eraEvents = [];
+    const flushEra = () => {
+        if (!currentEra || !eraEvents.length) return;
+        const band = el("div", { class: "era-band" }, [
+            el("span", { class: "era-name", text: currentEra }),
+            el("span", { class: "era-rule" }),
+            el("span", {
+                class: "era-span",
+                text: `${eraEvents[0].timeLabel} – ${eraEvents[eraEvents.length - 1].timeLabel}`
+            })
+        ]);
+        band.style.setProperty("--era-color", eraColor(currentEra));
+        els.view.insertBefore(band, els.view.querySelector(`[data-id="${eraEvents[0].id}"]`));
+    };
+
+    shown.forEach((event) => {
+        if ((event.era || "") !== currentEra) {
+            flushEra();
+            currentEra = event.era || "";
+            eraEvents = [];
+        }
+        eraEvents.push(event);
+        els.view.appendChild(renderEventCard(event, timeline.events.indexOf(event), timeline));
+    });
+    flushEra();
+}
+
+function renderCodex() {
+    const timeline = store.state.timeline;
+    els.codex.replaceChildren();
+    if (!timeline) {
+        els.codexCount.textContent = "";
+        return;
+    }
+    els.codexCount.textContent = `${timeline.entities.length}`;
+
+    Object.entries(ENTITY_KINDS).forEach(([kind, config]) => {
+        const group = timeline.entities.filter((e) => e.kind === kind);
+        if (!group.length) return;
+        els.codex.appendChild(el("p", { class: "codex-group", text: config.label }));
+        group.forEach((entity) => {
+            const active = store.state.filter.entityId === entity.id;
+            const gone = ["fallen", "dead", "ruined", "spent"].includes(entity.status);
+            const item = el("div", { class: `codex-item ${active ? "active" : ""}`, title: entity.epithet || entity.note || "" }, [
+                el("span", { class: "glyph", text: config.icon }),
+                el("span", { class: "name", text: entity.name }),
+                el("span", { class: `status ${gone ? "gone" : ""}`, text: entity.status })
+            ]);
+            item.addEventListener("click", () => {
+                store.setFilter({ entityId: active ? "" : entity.id });
+            });
+            els.codex.appendChild(item);
+        });
+    });
+}
+
+function renderLibrary() {
+    els.library.replaceChildren();
+    const { library, timeline } = store.state;
+    els.libraryCount.textContent = library.length ? String(library.length) : "";
+
+    if (!library.length) {
+        els.library.appendChild(el("p", { class: "hint", text: "Timelines you generate are saved here automatically." }));
+        return;
+    }
+
+    library.forEach((entry) => {
+        const open = el("button", { class: "open" }, [
+            el("strong", { text: entry.title || "Untitled chronicle" }),
+            el("small", { text: `${entry.eventCount} events · ${new Date(entry.updatedAt).toLocaleDateString()}` })
+        ]);
+        open.addEventListener("click", () => {
+            store.loadFromLibrary(entry.id);
+            toast(`Opened “${entry.title || "Untitled"}”.`);
+        });
+
+        const remove = el("button", { class: "remove", title: "Delete", text: "✕" });
+        remove.addEventListener("click", () => {
+            store.removeFromLibrary(entry.id);
+            toast("Removed from the library.");
+        });
+
+        els.library.appendChild(
+            el("div", { class: `library-item ${timeline && timeline.id === entry.id ? "current" : ""}` }, [open, remove])
+        );
+    });
+}
+
+function renderFilters() {
+    const timeline = store.state.timeline;
+    const tags = new Set();
+    if (timeline) timeline.events.forEach((e) => e.tags.forEach((t) => tags.add(t)));
+
+    const current = store.state.filter.tag;
+    els.tagFilter.replaceChildren(el("option", { value: "", text: "any" }));
+    Array.from(tags).sort().forEach((tag) => {
+        const option = el("option", { value: tag, text: tag });
+        if (tag === current) option.setAttribute("selected", "selected");
+        els.tagFilter.appendChild(option);
+    });
+    els.tagFilter.value = current;
+    els.importanceFilter.value = String(store.state.filter.minImportance);
+    if (document.activeElement !== els.search) els.search.value = store.state.filter.text;
+}
+
+function render() {
+    els.busy.hidden = !store.state.busy;
+    if (store.state.busy) els.busy.textContent = store.state.busy;
+    renderMeta();
+    renderFilters();
+    renderTimeline();
+    renderCodex();
+    renderLibrary();
+}
+
+// ----------------------------------------------------------------- generation
+
+function usingModel() {
+    return store.state.settings.aiMode !== "engine";
+}
+
+/** Gives model-written events sane numeric times when the model omits them. */
+function normalizeTimes(timeline) {
+    const genre = getGenre(timeline.genreId);
+    timeline.events.forEach((event, index) => {
+        if (Number.isFinite(event.time)) return;
+        const prev = timeline.events[index - 1];
+        const next = timeline.events.slice(index + 1).find((e) => Number.isFinite(e.time));
+        if (prev && next) event.time = Math.round((prev.time + next.time) / 2);
+        else if (prev) event.time = prev.time + genre.time.step[0];
+        else if (next) event.time = next.time - genre.time.step[0];
+        else event.time = genre.time.start[0];
+        if (!event.timeLabel) event.timeLabel = formatTime(genre, event.time);
+    });
+}
+
+async function modelEvents(timeline, mode, count, extra = {}) {
+    const payload = await generateWithModel({
+        timeline,
+        mode,
+        count,
+        instruction: els.steer.value.trim(),
+        settings: store.state.settings,
+        ...extra
+    });
+    const events = reconcile(timeline, payload.events, extra);
+    if (!events.length) throw new Error("The model returned no usable events.");
+    return events;
+}
+
+async function withBusy(message, task) {
+    store.setBusy(message);
+    try {
+        await task();
+    } catch (err) {
+        console.error(err);
+        toast(err.message || String(err), true);
+    } finally {
+        store.setBusy(null);
+    }
+}
+
+async function doGenerate() {
+    const premise = els.premise.value.trim();
+    const genreId = els.genre.value;
+    const length = Math.max(4, Math.min(40, Number(els.length.value) || 14));
+    const seed = els.seed.value.trim() || randomSeedWord();
+    els.seed.value = seed;
+
+    await withBusy(usingModel() ? "Asking Claude for a history…" : "Composing a history…", async () => {
+        if (!usingModel()) {
+            store.open(createTimeline({ premise, genreId, seed, length, scale: els.scale.value }));
+            toast(`Generated ${store.state.timeline.events.length} events.`);
+            return;
+        }
+
+        // The engine still builds the world; the model writes the record.
+        const shell = createTimeline({ premise, genreId, seed, length: 0, scale: els.scale.value });
+        try {
+            const events = await modelEvents(shell, "create", length, { era: "" });
+            shell.events = events;
+            normalizeTimes(shell);
+            store.open(shell);
+            toast(`Claude wrote ${events.length} events.`);
+        } catch (err) {
+            store.open(createTimeline({ premise, genreId, seed, length, scale: els.scale.value }));
+            toast(`${err.message} Fell back to the built-in engine.`, true);
+        }
+    });
+}
+
+async function doExtend(direction) {
+    const timeline = store.state.timeline;
+    if (!timeline) return;
+    const count = Math.max(1, Math.min(12, Number(els.extendCount.value) || 4));
+    const forward = direction === "forward";
+
+    await withBusy(forward ? "Continuing the record…" : "Reaching further back…", async () => {
+        if (!usingModel()) {
+            store.commit(forward ? "continue forward" : "extend backward", (tl) => {
+                const added = forward ? extendForward(tl, count) : extendBackward(tl, count);
+                toast(added.length ? `Added ${added.length} events.` : "The engine had nothing left to add here.");
+            });
+            return;
+        }
+        const events = await modelEvents(timeline, forward ? "continue" : "backward", count, {
+            era: forward
+                ? (timeline.events[timeline.events.length - 1] || {}).era || ""
+                : (timeline.events[0] || {}).era || ""
+        });
+        store.commit(forward ? "continue forward" : "extend backward", (tl) => {
+            if (forward) tl.events.push(...events);
+            else tl.events.unshift(...events);
+            normalizeTimes(tl);
+        });
+        toast(`Claude added ${events.length} events.`);
+    });
+}
+
+async function doExpand(eventId) {
+    const timeline = store.state.timeline;
+    const index = timeline.events.findIndex((e) => e.id === eventId);
+    if (index === -1) return;
+    const anchor = timeline.events[index];
+
+    await withBusy("Filling in the gap…", async () => {
+        if (!usingModel()) {
+            store.commit("expand event", (tl) => {
+                const added = expandAfter(tl, eventId, 3);
+                toast(added.length ? `Added ${added.length} connecting events.` : "No room to expand here.");
+            });
+            return;
+        }
+        const events = await modelEvents(timeline, "expand", 3, {
+            anchor,
+            nextEvent: timeline.events[index + 1],
+            era: anchor.era,
+            act: anchor.act
+        });
+        store.commit("expand event", (tl) => {
+            const at = tl.events.findIndex((e) => e.id === eventId);
+            events.forEach((e) => e.causes.push(eventId));
+            tl.events.splice(at + 1, 0, ...events);
+            normalizeTimes(tl);
+        });
+        toast(`Claude added ${events.length} connecting events.`);
+    });
+}
+
+// -------------------------------------------------------------- interactions
+
+els.view.addEventListener("click", (domEvent) => {
+    const button = domEvent.target.closest("[data-action]");
+    if (!button) {
+        const row = domEvent.target.closest(".event");
+        if (row) store.select(row.dataset.id);
+        return;
+    }
+    const { action } = button.dataset;
+    const id = button.dataset.id;
+    const timeline = store.state.timeline;
+
+    if (action === "edit") {
+        editingId = editingId === id ? null : id;
+        store.select(id);
+        store.notify();
+        return;
+    }
+    if (action === "delete") {
+        const event = timeline.events.find((e) => e.id === id);
+        if (!event) return;
+        if (!confirm(`Delete “${event.title}”?`)) return;
+        store.commit("delete event", (tl) => {
+            tl.events = tl.events.filter((e) => e.id !== id);
+            tl.events.forEach((e) => {
+                e.causes = (e.causes || []).filter((c) => c !== id);
+            });
+        });
+        toast("Event deleted.");
+        return;
+    }
+    if (action === "pin") {
+        store.commit("pin event", () => {
+            const event = timeline.events.find((e) => e.id === id);
+            if (event) event.pinned = !event.pinned;
+        });
+        return;
+    }
+    if (action === "reroll") {
+        const event = timeline.events.find((e) => e.id === id);
+        if (event && event.pinned) {
+            toast("That event is pinned. Unpin it first.", true);
+            return;
+        }
+        store.commit("re-roll event", (tl) => {
+            const replacement = rerollEvent(tl, id);
+            toast(replacement ? "Event rewritten." : "The engine could not rewrite that one.");
+        });
+        return;
+    }
+    if (action === "expand") {
+        doExpand(id);
+        return;
+    }
+    if (action === "branch") {
+        const branch = branchFrom(timeline, id, Math.max(4, Number(els.extendCount.value) || 4) + 4);
+        if (!branch) {
+            toast("Could not branch from that event.", true);
+            return;
+        }
+        store.open(branch);
+        toast("Forked an alternate history. The original is still in your library.");
+        return;
+    }
+    if (action === "filter-tag") {
+        store.setFilter({ tag: store.state.filter.tag === button.dataset.tag ? "" : button.dataset.tag });
+        return;
+    }
+    if (action === "filter-entity") {
+        const entityId = button.dataset.entity;
+        store.setFilter({ entityId: store.state.filter.entityId === entityId ? "" : entityId });
+        return;
+    }
+    if (action === "goto") {
+        store.select(id);
+        const target = els.view.querySelector(`[data-id="${id}"]`);
+        if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+});
+
+// Drag to reorder.
+let dragId = null;
+els.view.addEventListener("dragstart", (domEvent) => {
+    const row = domEvent.target.closest(".event");
+    if (!row) return;
+    dragId = row.dataset.id;
+    row.classList.add("dragging");
+    domEvent.dataTransfer.effectAllowed = "move";
+});
+els.view.addEventListener("dragend", () => {
+    dragId = null;
+    els.view.querySelectorAll(".event").forEach((row) => row.classList.remove("dragging", "drop-target"));
+});
+els.view.addEventListener("dragover", (domEvent) => {
+    if (!dragId) return;
+    domEvent.preventDefault();
+    const row = domEvent.target.closest(".event");
+    els.view.querySelectorAll(".event").forEach((r) => r.classList.remove("drop-target"));
+    if (row && row.dataset.id !== dragId) row.classList.add("drop-target");
+});
+els.view.addEventListener("drop", (domEvent) => {
+    if (!dragId) return;
+    domEvent.preventDefault();
+    const row = domEvent.target.closest(".event");
+    if (!row || row.dataset.id === dragId) return;
+    const targetId = row.dataset.id;
+    store.commit("reorder events", (tl) => {
+        const from = tl.events.findIndex((e) => e.id === dragId);
+        const to = tl.events.findIndex((e) => e.id === targetId);
+        if (from === -1 || to === -1) return;
+        const [moved] = tl.events.splice(from, 1);
+        tl.events.splice(to, 0, moved);
+    });
+    dragId = null;
+});
+
+els.title.addEventListener("change", () => {
+    if (!store.state.timeline) return;
+    store.commit("rename timeline", (tl) => {
+        tl.title = els.title.value.trim();
+    });
+});
+
+els.generate.addEventListener("click", doGenerate);
+els.extendFwd.addEventListener("click", () => doExtend("forward"));
+els.extendBack.addEventListener("click", () => doExtend("backward"));
+
+els.addEvent.addEventListener("click", () => {
+    const timeline = store.state.timeline;
+    if (!timeline) return;
+    const genre = getGenre(timeline.genreId);
+    const last = timeline.events[timeline.events.length - 1];
+    const event = blankEvent(genre, last ? last.time + genre.time.step[0] : genre.time.start[0]);
+    event.era = last ? last.era : "";
+    store.commit("add event", (tl) => tl.events.push(event));
+    editingId = event.id;
+    store.select(event.id);
+    store.notify();
+});
+
+els.surprise.addEventListener("click", () => {
+    const premises = [
+        "A drowned archive city where cartographers hold political power",
+        "Three generation ships that arrive four centuries apart",
+        "A guild that discovers its founding charter was forged",
+        "The last river in a continent, and everyone who wants it",
+        "A machine that keeps working long after nobody understands it",
+        "Two siblings who each inherit half of a border",
+        "A plague of forgetting that only affects written records",
+        "A colony that votes, unanimously, to stop reporting home"
+    ];
+    els.premise.value = premises[Math.floor(Math.random() * premises.length)];
+    els.genre.selectedIndex = Math.floor(Math.random() * els.genre.options.length);
+    els.genre.dispatchEvent(new Event("change"));
+    els.seed.value = randomSeedWord();
+    doGenerate();
+});
+
+els.genre.addEventListener("change", () => {
+    const genre = getGenre(els.genre.value);
+    els.genreBlurb.textContent = genre.blurb;
+});
+
+els.aiMode.addEventListener("change", () => {
+    store.updateSettings({ aiMode: els.aiMode.value });
+    refreshAiPanel();
+});
+els.apiKey.addEventListener("change", () => store.updateSettings({ apiKey: els.apiKey.value.trim() }));
+els.model.addEventListener("change", () => store.updateSettings({ model: els.model.value }));
+
+els.search.addEventListener("input", () => store.setFilter({ text: els.search.value }));
+els.tagFilter.addEventListener("change", () => store.setFilter({ tag: els.tagFilter.value }));
+els.importanceFilter.addEventListener("change", () =>
+    store.setFilter({ minImportance: Number(els.importanceFilter.value) })
+);
+els.clearFilter.addEventListener("click", () =>
+    store.setFilter({ text: "", tag: "", entityId: "", minImportance: 1 })
+);
+
+els.undo.addEventListener("click", () => store.undo());
+els.redo.addEventListener("click", () => store.redo());
+
+els.exportBtn.addEventListener("click", () => {
+    const timeline = store.state.timeline;
+    if (!timeline) return;
+    const name = (timeline.title || "chronicle").replace(/[^\w -]/g, "").trim() || "chronicle";
+    const asMarkdown = confirm("OK for Markdown, Cancel for JSON.\n\nJSON can be re-imported here; Markdown is for reading and sharing.");
+    if (asMarkdown) download(`${name}.md`, toMarkdown(timeline), "text/markdown");
+    else download(`${name}.json`, JSON.stringify(timeline, null, 2));
+});
+
+els.importBtn.addEventListener("click", () => els.importInput.click());
+els.importInput.addEventListener("change", async () => {
+    const file = els.importInput.files && els.importInput.files[0];
+    if (!file) return;
+    try {
+        const data = JSON.parse(await file.text());
+        if (!Array.isArray(data.events) || !Array.isArray(data.entities)) {
+            throw new Error("That file is not a Chronicler timeline.");
+        }
+        data.id = data.id || uid("tl");
+        store.open(data);
+        toast(`Imported ${data.events.length} events.`);
+    } catch (err) {
+        toast(err.message || "Could not read that file.", true);
+    } finally {
+        els.importInput.value = "";
+    }
+});
+
+document.addEventListener("keydown", (domEvent) => {
+    const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(domEvent.target.tagName);
+    if ((domEvent.metaKey || domEvent.ctrlKey) && domEvent.key.toLowerCase() === "z") {
+        domEvent.preventDefault();
+        if (domEvent.shiftKey) store.redo();
+        else store.undo();
+        return;
+    }
+    if (typing) return;
+    if (domEvent.key === "g") doGenerate();
+    if (domEvent.key === "e") doExtend("forward");
+});
+
+// ------------------------------------------------------------------- start-up
+
+function refreshAiPanel() {
+    const { settings } = store.state;
+    els.aiMode.value = settings.aiMode;
+    els.apiKey.value = settings.apiKey || "";
+    els.model.value = settings.model;
+    els.apiFields.hidden = settings.aiMode !== "api";
+
+    const backends = detectBackends();
+    const runtimeOption = Array.from(els.aiMode.options).find((o) => o.value === "runtime");
+    runtimeOption.disabled = !backends.runtime;
+    runtimeOption.textContent = backends.runtime
+        ? "Claude (this page)"
+        : "Claude (this page — not available here)";
+
+    if (settings.aiMode === "runtime" && !backends.runtime) {
+        store.updateSettings({ aiMode: "engine" });
+        els.aiMode.value = "engine";
+    }
+
+    if (els.aiMode.value === "engine") {
+        els.aiStatus.textContent = "The built-in engine writes everything locally — no network, no key, and the same seed always gives the same history.";
+    } else if (els.aiMode.value === "api") {
+        els.aiStatus.textContent = "Claude writes the events; the engine still builds the world and keeps the record editable.";
+    } else {
+        els.aiStatus.textContent = "Claude is answering from inside this page.";
+    }
+}
+
+function init() {
+    GENRE_LIST.forEach((genre) => {
+        els.genre.appendChild(el("option", { value: genre.id, text: genre.label }));
+    });
+    els.genre.value = "fantasy";
+    els.genreBlurb.textContent = getGenre("fantasy").blurb;
+    els.seed.value = randomSeedWord();
+
+    refreshAiPanel();
+    store.subscribe(render);
+
+    // Reopen whatever was last worked on.
+    if (store.state.library.length) {
+        store.open(JSON.parse(JSON.stringify(store.state.library[0].data)), { undoable: false });
+    } else {
+        render();
+    }
+}
+
+init();
+// ---- end app.js ----
+
+</script>
+</body>
+</html>
