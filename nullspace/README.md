@@ -35,6 +35,11 @@ panel becomes a drawer behind the **▤** button. Tap outside a drawer to dismis
 it. Picking a channel closes the drawer for you, and switching servers opens it
 so you can choose where to land.
 
+The message list has its own scrollbar rather than the browser's, because mobile
+overlay scrollbars fade out and cannot be grabbed. Drag the thumb to scrub back
+through a channel's history, or tap the track to jump. While you are holding it,
+new messages stop pulling the view back to the bottom.
+
 #### No computer? Use GitHub Pages
 
 This is a static site, so GitHub will host it for free and you can set that up

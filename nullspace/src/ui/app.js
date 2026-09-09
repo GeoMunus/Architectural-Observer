@@ -6,6 +6,7 @@ import { PRESENCE, moodLabel, presenceRank } from "../model/agent.js";
 import { DOMAIN_BY_ID } from "../data/topics.js";
 import { VOICE_PROFILES } from "../data/voice.js";
 import { GeminiBrain, settings as modelSettings, DEFAULT_MODEL } from "../engine/brain.js";
+import { attachScrollbar } from "./scrollbar.js";
 
 const VOICE_LABEL = Object.fromEntries(VOICE_PROFILES.map((v) => [v.id, v.label]));
 
@@ -27,6 +28,8 @@ const dom = {
     channelName: el("channelName"),
     channelPurpose: el("channelPurpose"),
     messages: el("messages"),
+    scrollbar: el("scrollbar"),
+    scrollThumb: el("scrollThumb"),
     typing: el("typing"),
     composer: el("composer"),
     composerInput: el("composerInput"),
@@ -219,7 +222,12 @@ function messageHtml(world, message, previous) {
     </div>`;
 }
 
+let scrollbar = null;
+
 function nearBottom() {
+    // Dragging the thumb is an explicit request to be somewhere else, so never
+    // treat it as "close enough to the bottom" and snap away from the finger.
+    if (scrollbar && scrollbar.isDragging()) return false;
     const box = dom.messages;
     return box.scrollHeight - box.scrollTop - box.clientHeight < 140;
 }
@@ -263,6 +271,7 @@ function renderChannelFull() {
     state.lastRendered = previous;
     dom.messages.innerHTML = parts.join("");
     scrollToBottom();
+    if (scrollbar) scrollbar.update();
 }
 
 function appendMessage(message) {
@@ -278,6 +287,7 @@ function appendMessage(message) {
     state.renderedIds.add(message.id);
     state.lastRendered = message;
     if (stick) scrollToBottom();
+    if (scrollbar) scrollbar.update();
 }
 
 function refreshMessage(message) {
@@ -797,6 +807,7 @@ function resumeWorld(world) {
 
 function init() {
     wireEvents();
+    scrollbar = attachScrollbar(dom.messages, dom.scrollbar, dom.scrollThumb);
     wireModelPanel();
     renderModelPanel();
     // Handy from the console: inspect the live world, agents and pending queue.

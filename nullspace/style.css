@@ -155,6 +155,11 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
     height: 100vh;
     /* dvh tracks the shrinking viewport when mobile browser chrome hides. */
     height: 100dvh;
+    /* The single implicit row would be auto-sized, letting a tall column grow
+       past the viewport instead of scrolling inside it — which pushed the
+       composer off the bottom of the screen in any busy channel. minmax(0,1fr)
+       pins the row to the container height so the panes scroll internally. */
+    grid-template-rows: minmax(0, 1fr);
     max-width: 100vw;
     overflow-x: hidden;
 }
@@ -235,6 +240,7 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
     background: var(--bg-side);
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
+    min-height: 0;
     border-right: 1px solid rgba(0, 0, 0, 0.4);
 }
 
@@ -330,6 +336,7 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
 .chat {
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto auto;
+    min-height: 0;
     background: var(--bg-chat);
     min-width: 0;
 }
@@ -424,10 +431,58 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
 
 .icon-btn:hover { color: var(--text); border-color: var(--accent); }
 
+.messages-wrap {
+    position: relative;
+    min-height: 0;
+    display: grid;
+    /* Without an explicit constrained row the implicit one is auto-sized, so
+       .messages would grow to its content height and never scroll internally. */
+    grid-template-rows: minmax(0, 1fr);
+}
+
 .messages {
     overflow-y: auto;
-    padding: 18px 18px 4px;
+    padding: 18px 24px 4px 18px;
     scroll-behavior: smooth;
+    /* The native bar is replaced by .scrollbar below; two would be absurd. */
+    scrollbar-width: none;
+}
+
+.messages::-webkit-scrollbar { display: none; }
+
+/* Dragging the thumb sets scrollTop every pointermove, and smooth scrolling
+   would animate toward each one and trail the finger. */
+.messages.is-scrubbing { scroll-behavior: auto; }
+
+.scrollbar {
+    position: absolute;
+    top: 8px;
+    right: 4px;
+    bottom: 8px;
+    width: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.035);
+    z-index: 5;
+    /* Stops the browser claiming the gesture before the thumb handler does. */
+    touch-action: none;
+}
+
+.scrollbar__thumb {
+    position: absolute;
+    top: 0;
+    left: 2px;
+    right: 2px;
+    border-radius: 999px;
+    background: #3a4160;
+    transition: background 0.15s;
+    cursor: grab;
+}
+
+.scrollbar:hover .scrollbar__thumb { background: #4b5478; }
+
+.scrollbar.is-dragging .scrollbar__thumb {
+    background: var(--accent);
+    cursor: grabbing;
 }
 
 .day-break {
@@ -532,7 +587,13 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
     color: var(--muted);
     margin-bottom: 2px;
     opacity: 0.85;
+    /* A reply preview is a one-line reference. Letting it wrap turns the
+       quoted text into a block that competes with the message itself. */
+    min-width: 0;
 }
+
+.msg__reply .avatar { flex: none; }
+.msg__reply > span { flex: none; }
 
 .msg__reply::before {
     content: "";
@@ -545,7 +606,14 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
     align-self: flex-end;
 }
 
-.msg__reply em { font-style: normal; color: var(--dim); }
+.msg__reply em {
+    font-style: normal;
+    color: var(--dim);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
 .mention {
     background: var(--accent-soft);
@@ -640,6 +708,7 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
     border-left: 1px solid var(--line);
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
+    min-height: 0;
     min-width: 0;
 }
 
@@ -925,7 +994,10 @@ button, input { font-family: inherit; font-size: inherit; color: inherit; }
     .rail__item { width: 40px; height: 40px; font-size: 17px; border-radius: 13px; }
     .rail__item::after { left: -8px; }
 
-    .messages { padding: 12px 12px 4px; }
+    .messages { padding: 12px 22px 4px 12px; }
+
+    .scrollbar { width: 14px; right: 2px; }
+    .scrollbar__thumb { left: 3px; right: 3px; }
     .msg { grid-template-columns: 34px minmax(0, 1fr); gap: 9px; }
     .avatar { width: 32px; height: 32px; font-size: 15px; }
     .composer { padding: 4px 12px calc(14px + env(safe-area-inset-bottom)); }
