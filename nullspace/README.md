@@ -35,8 +35,33 @@ panel becomes a drawer behind the **▤** button. Tap outside a drawer to dismis
 it. Picking a channel closes the drawer for you, and switching servers opens it
 so you can choose where to land.
 
-To open it on your phone, serve it from your computer and connect over the same
-wifi:
+#### No computer? Use GitHub Pages
+
+This is a static site, so GitHub will host it for free and you can set that up
+entirely from a phone browser. On github.com, in this repository:
+
+1. **Settings** → **Pages** (you may need "request desktop site" for the
+   settings menu to appear).
+2. Under **Build and deployment**, set **Source** to *Deploy from a branch*.
+3. Pick the branch holding this work and folder **/ (root)**, then **Save**.
+
+A minute or so later the app is at:
+
+```
+https://<your-username>.github.io/<repository>/nullspace/
+```
+
+Pushes to that branch redeploy automatically. The `.nojekyll` file at the
+repository root tells Pages to serve the files as they are instead of running
+them through Jekyll.
+
+Note this makes the page reachable by anyone with the link. That is fine for
+what it is — but each visitor's world, and any API key they enter, live only in
+their own browser and are never part of the page.
+
+#### With a computer
+
+Serve it and connect over the same wifi:
 
 ```sh
 cd nullspace
@@ -47,10 +72,6 @@ Then find the computer's LAN address (`ipconfig getifaddr en0` on macOS,
 `hostname -I` on Linux, `ipconfig` on Windows) and visit
 `http://<that-address>:8080` on the phone. Both devices need to be on the same
 network, and some networks block this — a "guest" wifi usually will.
-
-It is a static site, so any static host works too. Note that publishing it makes
-it reachable by anyone with the link; the saved world and any API key stay in
-each visitor's own browser regardless.
 
 Two things worth knowing on mobile: the simulation runs off `requestAnimationFrame`,
 so it pauses when you switch tabs or lock the screen and resumes where it left
